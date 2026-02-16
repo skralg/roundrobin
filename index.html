@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=utf-8>
+        <link rel="icon" type="image/png" href="Ember-16.png"/>
+        <title>Ember's Adrift Round-Robin Loot Tracker</title>
+        <link rel="stylesheet" href="rr.css"/>
+        <script src="rr.js"></script>
+    </head>
+    <body>
+        <div id="qc" class="queue_container">
+            <table class="queue" id="queue_1">
+                <tr><th colspan="2"><span class='delchar' onclick='delQueue(this)'>X</span> Central Runes</th></tr>
+                <tr>
+                    <td>Bigslamma</td>
+                    <td><input class="count" size="1" value="16"/> <button class="tools" onclick="loot(this)">+</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Piisami</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools" onclick="loot(this)">+</button><input type="checkbox"/></td>
+                </tr>
+                <tr>
+                    <td>Pokes</td>
+                    <td><input class="count" size="1" value="12"/> <button class="tools" onclick="loot(this)">+</button><input type="checkbox"/></td>
+                </tr>
+                <tr>
+                    <td>Rednock</td>
+                    <td><input class="count" size="1" value="1"/> <button class="tools" onclick="loot(this)">+</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Roscoe</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools" onclick="loot(this)">+</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Urbanum</td>
+                    <td><input class="count" size="1" value="1"/> <button class="tools">+</button><input type="checkbox" checked/></td>
+                </tr>
+            </table>
+
+            <table class="queue" id="queue_2">
+                <tr><th colspan="2"><span class='delchar' onclick='delQueue(this)'>X</span> Central Shards</th></tr>
+                <tr>
+                    <td>Bigslamma</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools" onclick="loot2(this)">+2</button> <button class="tools" onclick="loot5(this)">+5</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Piisami</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools" onclick="loot2(this)">+2</button> <button class="tools" onclick="loot5(this)">+5</button><input type="checkbox"/></td>
+                </tr>
+                <tr>
+                    <td>Roscoe</td>
+                    <td><input class="count" size="1" value="2"/> <button class="tools" onclick="loot2(this)">+2</button> <button class="tools" onclick="loot5(this)">+5</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Urbanum</td>
+                    <td><input class="count" size="1" value="5"/> <button class="tools" onclick="loot2(this)">+2</button> <button class="tools" onclick="loot5(this)">+5</button><input type="checkbox" checked/></td>
+                </tr>
+            </table>
+
+            <table class="queue" id="queue_2">
+                <tr><th colspan="2"><span class='delchar' onclick='delQueue(this)'>X</span> Volatile Ember Flux</th></tr>
+                <tr>
+                    <td>Bigslamma</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools">+</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Piisami</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools">+</button><input type="checkbox"/></td>
+                </tr>
+                <tr>
+                    <td>Pokes</td>
+                    <td><input class="count" size="1" value="0"/> <button class="tools">+</button><input type="checkbox"/></td>
+                </tr>
+                <tr>
+                    <td>Rednock</td>
+                    <td><input class="count" size="1" value="1"/> <button class="tools">+</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Roscoe</td>
+                    <td><input class="count" size="1" value="1"/> <button class="tools">+</button><input type="checkbox" checked/></td>
+                </tr>
+                <tr>
+                    <td>Urbanum</td>
+                    <td><input class="count" size="1" value="1"/> <button class="tools">+</button><input type="checkbox" checked/></td>
+                </tr>
+            </table>
+        </div>
+        &nbsp; &nbsp;
+        <table class="charlist" id="character_pool">
+            <tr><th>Character List</th></tr>
+            <tr><th style="text-align: center"><button onclick="addChar();">+ Add Char</button></th></tr>
+            <tr><th style="text-align: center"><button onclick="addQueue(false);">+ Add Queue</button></th></tr>
+            <tr><th style="text-align: center"><button onclick="addQueue(true);">+ Add Shard Queue</button></th></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="annoyingllama"/> Annoyingllama</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="bigslamma" checked/> Bigslamma</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="boop" checked/> Boop</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="favoritejess"/> Favoritejess</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="geoffrey"/> Geoffrey</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="new"/> New</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="ogion"/> Ogion</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="piisami" checked/> Piisami</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="pokes" checked/> Pokes</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="pyzjn"/> Pyzjn</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="quoetzl"/> Quoetzl</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="raxtin"/> Raxtin</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="rednock" checked/> Rednock</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="roscoe" checked/> Roscoe</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="svarog"/> Svarog</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="torv"/> Torv</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="tober"/> Tober</td></tr>
+            <tr><td><span class='delchar' onclick='delChar(this)'>X</span><input type="checkbox" value="urbanum" checked/> Urbanum</td></tr>
+        </table>
+    </body>
+</html>
