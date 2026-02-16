@@ -161,28 +161,32 @@ function delQueue(element) {
 function loot2(element) { loot(element, 2); }
 function loot5(element) { loot(element, 5); }
 function loot(element, count=1) {
-    input = element.parentElement.querySelector("input.count");
-    if (!input) return;
-    value = parseInt(input.value) || 0;
+    counter = element.parentElement.querySelector("input.count");
+    if (!counter) return;
+    value = parseInt(counter.value) || 0;
     value += count || 1;
-    input.value = value;
-    row = element.parentElement.parentElement;
-    player = row.cells[0].innerText;
+    counter.value = value;
+
     // Recursively traverse the parentElements until we find the table element
     parentTable = element.parentElement;
     while (parentTable && parentTable.nodeName !== "TABLE") {
         parentTable = parentTable.parentElement;
     }
 
-    // if the last winner is blank, and the player who just got loot has their checkbox enabled, set them as the last winner.
+    // if first winner, and the player who just got loot has their checkbox enabled, set them as the last winner.
     checkbox = element.parentElement.querySelector("input[type='checkbox']");
     if (parentTable.dataset.lastWinner == "" && checkbox.checked) {
+        row = element.parentElement.parentElement;
+        player = row.cells[0].innerText;
         parentTable.dataset.lastWinner = player;
     }
+
+    // Sort the queue
     sortQueue(parentTable);
+
     // Update suggestion text to the player name in the first td of the first row that doesn't have a th (the next player up)
     suggestion = parentTable.querySelector(".suggest");
-    if (parentTable.dataset.lastWinner != "" && suggestion) {
+    if (parentTable.dataset.lastWinner != "") {
         nextRow = Array.from(parentTable.rows).find(row => !row.querySelector("th"));
         if (nextRow) {
             nextPlayer = nextRow.cells[0].innerText;
@@ -194,8 +198,8 @@ function loot(element, count=1) {
 function sortQueue(element) {
     // Sort the rows of the queue table based on the value of the count input,
     // in ascending order, then by cell 0 alphabetically
-    // Walk up the parent tree until you get the table element
-    queueTable = element;
+
+    queueTable = element; // Walk parent tree until table element
     while (queueTable && queueTable.nodeName !== "TABLE") {
         queueTable = queueTable.parentElement;
     }
@@ -230,5 +234,4 @@ function sortQueue(element) {
         return aName.localeCompare(bName); // then by name asc
     });
     rows.forEach(row => queueTable.appendChild(row));
-
 }
