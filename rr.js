@@ -14,6 +14,12 @@ function addChar () {
     remove = "<span class='delchar' onclick='delChar(this)'>X</span>";
     cell.innerHTML = remove + "<input type='checkbox' value='" + id + "' checked/> " + title;
     sortTable("character_pool");
+    // Add this character to all existing queues
+    let queues = document.querySelectorAll(".queue");
+    queues.forEach(queue => {
+        addCharToQueue(queue, id);
+        sortQueue(queue);
+    });
 }
 
 function delChars() {
@@ -27,10 +33,24 @@ function delChars() {
     }
 }
 function delChar(element) {
-    if (confirm("Are you sure you want to delete this character?\nThis will remove them from all queues.")) {
-        element.parentElement.parentElement.remove();
-        sortTable("character_pool");
+    if (!confirm("Are you sure you want to delete this character?\nThis will remove them from all queues.")) {
+        return;
     }
+    // Remove this character from all queues
+    charname = element.parentElement.querySelector("input[type='checkbox']").value;
+    let queues = document.querySelectorAll(".queue");
+    queues.forEach(queue => {
+        let rows = Array.from(queue.rows).filter(row => !row.querySelector("th"));
+        rows.forEach(row => {
+            if (row.cells[0].innerText.toLowerCase() === charname.toLowerCase()) {
+                row.remove();
+            }
+        });
+    });
+    
+    // Remove the character from the character pool
+    element.parentElement.parentElement.remove();
+    sortTable("character_pool");
 }
 
 function toTitleCase(str) {
@@ -73,6 +93,7 @@ function addQueue(queueName="", shards=false) {
     tbl = document.createElement("table");
     tbl.classList.add("queue");
     tbl.dataset.lastWinner = "";
+    tbl.dataset.shards = shards;
     document.getElementById("qc").appendChild(tbl);
     // Header row
     row = tbl.insertRow(-1);
@@ -90,17 +111,21 @@ function addQueue(queueName="", shards=false) {
     th.innerText = "Next: Everyone click NEED";
     row.appendChild(th);
     
-    characters.forEach(char => {
-        row = tbl.insertRow(-1);
-        cell = row.insertCell(0);
-        cell.innerText = toTitleCase(char);
-        controls = row.insertCell(1);
-        if (shards) {
-            controls.innerHTML = "<input class='count' size='2' value='0'/> <button class='tools' onclick='loot2(this)'>+2</button> <button class='tools' onclick='loot5(this)'>+5</button><input type='checkbox' checked/>";
-        } else {
-            controls.innerHTML = "<input class='count' size='2' value='0'/> <button class='tools' onclick='loot(this)'>+</button><input type='checkbox' checked/>";
-        }
-    });
+    characters.forEach(char => addCharToQueue(tbl, char));
+}
+
+function addCharToQueue(tbl, char) {
+    row = tbl.insertRow(-1);
+    cell = row.insertCell(0);
+    cell.innerText = toTitleCase(char);
+    controls = row.insertCell(1);
+    controls.innerHTML = "<input class='count' size='2' value='0'/> ";
+    if (tbl.dataset.shards == "true") {
+        controls.innerHTML += "<button class='tools' onclick='loot2(this)'>+2</button> <button class='tools' onclick='loot5(this)'>+5</button>";
+    } else {
+        controls.innerHTML += "<button class='tools' onclick='loot(this)'>+</button>";
+    }
+    controls.innerHTML += " <input type='checkbox' onclick='sortQueue(this)' checked/>";
 }
 
 function resetQueue(element) {
@@ -143,24 +168,54 @@ function loot(element, count=1) {
     input.value = value;
     row = element.parentElement.parentElement;
     player = row.cells[0].innerText;
-    parentTable = element.parentElement.parentElement.parentElement.parentElement;
-    if (parentTable.dataset.lastWinner == "") parentTable.dataset.lastWinner = player;
-    sortQueue(parentTable);
-    // Update suggestion text to the next player at the top of the list
-    suggestion = parentTable.querySelector(".suggest");
-    if (suggestion) {
-        nextPlayer = parentTable.querySelector("tr:nth-child(3) td:first-child").innerText;
-        suggestion.innerText = "Next: " + nextPlayer;
+    // Recursively traverse the parentElements until we find the table element
+    parentTable = element.parentElement;
+    while (parentTable && parentTable.nodeName !== "TABLE") {
+        parentTable = parentTable.parentElement;
     }
+
+    // if the last winner is blank, and the player who just got loot has their checkbox enabled, set them as the last winner.
+    checkbox = element.parentElement.querySelector("input[type='checkbox']");
+    if (parentTable.dataset.lastWinner == "" && checkbox.checked) {
+        parentTable.dataset.lastWinner = player;
+    }
+    // Update suggestion text to the player name in the first td of the first row that doesn't have a th (the next player up)
+    suggestion = parentTable.querySelector(".suggest");
+    if (parentTable.dataset.lastWinner && suggestion) {
+        nextRow = Array.from(parentTable.rows).find(row => !row.querySelector("th"));
+        if (nextRow) {
+            nextPlayer = nextRow.cells[0].innerText;
+            suggestion.innerText = "Next: " + nextPlayer;
+        }
+    }
+    sortQueue(parentTable);
 }
 
-function sortQueue(queueTable) {
+function sortQueue(element) {
     // Sort the rows of the queue table based on the value of the count input,
     // in ascending order, then by cell 0 alphabetically
-    tbody = queueTable.tBodies[0] || queueTable;
-    rows = Array.from(tbody.rows).slice(2); // skip headers
-    lastWinner = queueTable.dataset.lastWinner.toLowerCase();
+    // Walk up the parent tree until you get the table element
+    queueTable = element;
+    while (queueTable && queueTable.nodeName !== "TABLE") {
+        queueTable = queueTable.parentElement;
+    }
+    if (!queueTable) return;
+    rows = Array.from(queueTable.rows);
+    // skip rows with th elements (header and suggestion)
+    rows = rows.filter(row => !row.querySelector("th"));
+
+    if (queueTable.dataset.lastWinner) {
+        lastWinner = queueTable.dataset.lastWinner.toLowerCase();
+    } else {
+        lastWinner = null;
+    }
     rows.sort((a, b) => {
+        // if the checkbox is unchecked, treat count as -1 so they sort to the bottom
+        aChecked = a.querySelector("input[type='checkbox']").checked;
+        bChecked = b.querySelector("input[type='checkbox']").checked;
+        if (!aChecked && bChecked) return 1;
+        if (aChecked && !bChecked) return -1;
+        
         aCount = parseInt(a.querySelector("input.count").value) || 0;
         bCount = parseInt(b.querySelector("input.count").value) || 0;
         if (bCount !== aCount) return aCount - bCount; // sort by count asc
@@ -174,6 +229,6 @@ function sortQueue(queueTable) {
         }
         return aName.localeCompare(bName); // then by name asc
     });
-    rows.forEach(row => tbody.appendChild(row));
+    rows.forEach(row => queueTable.appendChild(row));
 
 }
