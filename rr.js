@@ -179,16 +179,16 @@ function loot(element, count=1) {
     if (parentTable.dataset.lastWinner == "" && checkbox.checked) {
         parentTable.dataset.lastWinner = player;
     }
+    sortQueue(parentTable);
     // Update suggestion text to the player name in the first td of the first row that doesn't have a th (the next player up)
     suggestion = parentTable.querySelector(".suggest");
-    if (parentTable.dataset.lastWinner && suggestion) {
+    if (parentTable.dataset.lastWinner != "" && suggestion) {
         nextRow = Array.from(parentTable.rows).find(row => !row.querySelector("th"));
         if (nextRow) {
             nextPlayer = nextRow.cells[0].innerText;
             suggestion.innerText = "Next: " + nextPlayer;
         }
     }
-    sortQueue(parentTable);
 }
 
 function sortQueue(element) {
