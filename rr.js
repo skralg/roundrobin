@@ -178,7 +178,7 @@ function loot(element, count=1) {
     if (parentTable.dataset.lastWinner == "" && checkbox.checked) {
         row = element.parentElement.parentElement;
         player = row.cells[0].innerText;
-        parentTable.dataset.lastWinner = player;
+        parentTable.dataset.lastWinner = player.toLowerCase();
     }
 
     // Sort the queue
@@ -226,7 +226,7 @@ function sortQueue(element) {
         // Round robin after last winner
         aName = a.cells[0].innerText.toLowerCase();
         bName = b.cells[0].innerText.toLowerCase();
-        if (lastWinner) {
+        if (lastWinner && aName != lastWinner && bName != lastWinner) {
             //if name is after last winner alphabetically, it should sort higher than names that are before the last winner
             if (aName.localeCompare(lastWinner) > 0 && bName.localeCompare(lastWinner) < 0) return -1;
             if (aName.localeCompare(lastWinner) < 0 && bName.localeCompare(lastWinner) > 0) return 1;
