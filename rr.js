@@ -96,14 +96,16 @@ function addQueue(queueName="", shards=false) {
     tbl.classList.add("queue");
     tbl.dataset.lastWinner = "";
     tbl.dataset.shards = shards;
+    tbl.dataset.createdAt = Date.now();
     document.getElementById("qc").appendChild(tbl);
     // Header row
     row = tbl.insertRow(-1);
     th = document.createElement("th");
     th.colSpan = 2;
-    deleteQ = "<span class='delchar' onclick='delQueue(this)'>X</span> ";
-    resetQ = " <span class='delchar' onclick='resetQueue(this)' alt='Reset Tracker'>↺</span> ";
-    th.innerHTML = deleteQ + queueName + resetQ;
+    deleteQ = "<span class='delchar' style='float: left' onclick='delQueue(this)'>X</span> ";
+    resetQ = " <span class='delchar' style='float: right'onclick='resetQueue(this)'>↺</span> ";
+    ageQ = "&nbsp; <span class='trackerAge'>0:00:00</span>";
+    th.innerHTML = deleteQ + queueName + ageQ + resetQ;
     row.appendChild(th);
     // Suggestion row
     row = tbl.insertRow(-1);
@@ -112,7 +114,16 @@ function addQueue(queueName="", shards=false) {
     th.classList.add("suggest");
     th.innerText = "Next: Everyone click NEED";
     row.appendChild(th);
+
+    // Add a stats row (th) to the table that counts the total loot, and loot per hour
+    row = tbl.insertRow(-1);
+    th = document.createElement("th");
+    th.colSpan = 2;
+    th.classList.add("stats");
+    th.innerText = "Drops: 0 | Per hour: 0";
+    row.appendChild(th);
     
+    // Add checked characters to the queue
     characters.forEach(char => addCharToQueue(tbl, char));
 }
 
@@ -136,6 +147,7 @@ function resetQueue(element) {
         inputs = queueTable.querySelectorAll("input.count");
         inputs.forEach(input => input.value = "0");
         queueTable.dataset.lastWinner = "";
+        queueTable.dataset.createdAt = Date.now();
         // Update suggestion text to the next player at the top of the list
         suggestion = queueTable.querySelector(".suggest");
         suggestion.innerText = "Next: Everyone click NEED"
@@ -181,6 +193,16 @@ function loot(element, count=1) {
         row = element.parentElement.parentElement;
         player = row.cells[0].innerText;
         parentTable.dataset.lastWinner = player.toLowerCase();
+    }
+
+    // Update the stats row with the total loot and loot per hour
+    statsRow = parentTable.querySelector(".stats");
+    if (statsRow) {
+        totalLoot = Array.from(parentTable.querySelectorAll("input.count")).reduce((sum, input) => sum + (parseInt(input.value) || 0), 0);
+        createdAt = parseInt(parentTable.dataset.createdAt);
+        hours = (Date.now() - createdAt) / 3600000;
+        lootPerHour = hours > 0 ? (totalLoot / hours).toFixed(2) : totalLoot;
+        statsRow.innerText = `Drops: ${totalLoot} | Per hr: ${lootPerHour}`;
     }
 
     // Sort the queue
@@ -242,9 +264,26 @@ function sortQueue(element) {
 }
 
 function onLoad() {
+    // Set up event listener for pressing Enter in the new character input box
     document.getElementById('new_char_name').addEventListener('keypress', function(event) {
         if (event.key === 'Enter') {
             addChar();
         }
     });
+
+    // Update tracker ages every second
+    setInterval(() => {
+        let trackers = document.querySelectorAll(".queue");
+        trackers.forEach(tracker => {
+            let ageSpan = tracker.querySelector(".trackerAge");
+            if (ageSpan) {
+                let createdAt = parseInt(tracker.dataset.createdAt);
+                let ageSeconds = Math.floor((Date.now() - createdAt) / 1000);
+                let hours = Math.floor(ageSeconds / 3600);
+                let minutes = Math.floor((ageSeconds % 3600) / 60);
+                let seconds = ageSeconds % 60;
+                ageSpan.innerText = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        });
+    }, 1000);
 }
