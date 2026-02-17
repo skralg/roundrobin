@@ -226,7 +226,10 @@ function sortQueue(element) {
         // Round robin after last winner
         aName = a.cells[0].innerText.toLowerCase();
         bName = b.cells[0].innerText.toLowerCase();
-        if (lastWinner && aName != lastWinner && bName != lastWinner) {
+
+        if (lastWinner) {
+            if (aName === lastWinner) return -1; // first winner should always sort to the top
+            if (bName === lastWinner) return 1;
             //if name is after last winner alphabetically, it should sort higher than names that are before the last winner
             if (aName.localeCompare(lastWinner) > 0 && bName.localeCompare(lastWinner) < 0) return -1;
             if (aName.localeCompare(lastWinner) < 0 && bName.localeCompare(lastWinner) > 0) return 1;
