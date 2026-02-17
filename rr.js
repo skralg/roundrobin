@@ -20,6 +20,8 @@ function addChar () {
         addCharToQueue(queue, id);
         sortQueue(queue);
     });
+    // Put the cursor back into the input box
+    document.getElementById("new_char_name").focus();
 }
 
 function delChars() {
@@ -237,4 +239,12 @@ function sortQueue(element) {
         return aName.localeCompare(bName); // then by name asc
     });
     rows.forEach(row => queueTable.appendChild(row));
+}
+
+function onLoad() {
+    document.getElementById('new_char_name').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            addChar();
+        }
+    });
 }
