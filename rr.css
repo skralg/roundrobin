@@ -1,17 +1,17 @@
 body { background-color: #888888;}
-.queue_container { display: inline-block; vertical-align: top; }
-.queue { border: 1px solid black; display: inline-block; margin: 5px; padding: 5px; vertical-align: top; }
-.queue div { 
+.tracker_container { display: inline-block; vertical-align: top; }
+.tracker { border: 1px solid black; display: inline-block; margin: 5px; padding: 5px; vertical-align: top; }
+.tracker div {
     border: 2px solid #cccccc; background-color: #666666; padding: 5px; text-align: center;
     width: 100%; border-radius: 10px; font-weight: bold; font-family: monospace;
 }
 .suggest { border: 1px solid black; text-align: center; font-style: italic; font-weight: bolder; font-family: monospace;}
 .stats { border: 1px solid black; text-align: center; font-family: monospace; padding: 5px; color: #333; }
 .charlist { display: inline-block; vertical-align: top; border: 1px solid black; margin: 5px; padding: 5px; }
-.queuemaker { display: inline-block; vertical-align: top; border: 1px solid black; margin: 5px; padding: 5px; }
-.count { padding-right: 2px; text-align: center; background-color: #999999; }
-.queue .title { text-align: center; border: 1px solid black; margin: 0px; padding: 0px; border-radius: 0px; font-size: 12pt; }
-.queue td {
+.trackermaker { display: inline-block; vertical-align: top; border: 1px solid black; margin: 5px; padding: 5px; }
+.count { margin-right: 5px; text-align: center; background-color: #999999; }
+.tracker .title { text-align: center; border: 1px solid black; margin: 0px; padding: 0px; border-radius: 0px; font-size: 12pt; }
+.tracker td {
     border: 2px solid #ccc; border-radius: 10px; background-color: #666; text-align: center;
     padding-left: 10px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px;
     font-weight: bold; font-family: Monospace; border-collapse: collapse;

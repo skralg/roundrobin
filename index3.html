@@ -19,7 +19,6 @@ createApp({
         },
         // Converts a string to a lowercase, no-space version for consistent ID usage
         toIdCase(str) {
-            console.log(`toIdCase input: "${str}"`); // Debug log
             if (!str) return "";
             return str.toLowerCase().replace(/\s+/g, '');
         },
@@ -31,7 +30,6 @@ createApp({
                 input.value = '';
                 input.focus();
             }
-            console.log(`Adding character with name: "${name}"`); // Debug log
             let id = this.toIdCase(name);
             if (name && !(id in this.lootData.players)) {
                 // Add the new character with default tracker values for each existing tracker
@@ -184,39 +182,53 @@ createApp({
             const tracker = this.lootData.trackers[trackerId];
             if (!tracker) return [];
             return tracker.players.sort((a, b) => {
-                const A = (this.lootData.players[a] && this.lootData.players[a].name) || '';
-                const B = (this.lootData.players[b] && this.lootData.players[b].name) || '';
-                return A.localeCompare(B);
+                const A = this.lootData.players[a].trackers[trackerId];
+                const B = this.lootData.players[b].trackers[trackerId];
+                // Checked players are above unchecked players
+                if (A.checked && !B.checked) return -1;
+                if (!A.checked && B.checked) return 1;
+                // Players with more loot are lower priority
+                if (A.count !== B.count) return A.count - B.count;
+
+                if (!tracker.lastWinner) {
+                    // If no winner yet, sort alphabetically
+                    return this.lootData.players[a].name.localeCompare(this.lootData.players[b].name);
+                }
+                // If there is a winner, sort by proximity to last winner
+                const lastWinnerIndex = tracker.players.indexOf(tracker.lastWinner);
+                const indexA = tracker.players.indexOf(a);
+                const indexB = tracker.players.indexOf(b);
+                const distanceA = (indexA - lastWinnerIndex + tracker.players.length) % tracker.players.length;
+                const distanceB = (indexB - lastWinnerIndex + tracker.players.length) % tracker.players.length;
+                if (distanceA !== distanceB) return distanceA - distanceB;
+                return this.lootData.players[a].name.localeCompare(this.lootData.players[b].name);
             });
         },
     },
     computed: {
         sortedPlayerIds() {
             return Object.keys(this.lootData.players).sort((a, b) => {
-                const A = (this.lootData.players[a] && this.lootData.players[a].name) || '';
-                const B = (this.lootData.players[b] && this.lootData.players[b].name) || '';
-                return A.localeCompare(B);
+                const A = this.lootData.players[a];
+                const B = this.lootData.players[b];
+                // Sort by checked status first, then alphabetically by name
+                if (A.checked && !B.checked) return -1;
+                if (!A.checked && B.checked) return 1;
+                return A.name.localeCompare(B.name);
             })
-        },
+        }
     },
     mounted() {
         // Add event listener to the input field to allow adding characters by pressing Enter
         const input = document.getElementById('new_char_name');
         if (input) {
             input.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') {
-                    this.addChar();
-                }
+                if (event.key === 'Enter') this.addChar();
             });
         }
         // Focus the input field on page load for convenience
         input.focus();
-        // Update tracker elapsed time every second
-        setInterval(() => {
-            Object.keys(this.lootData.trackers).forEach(trackerId => {
-                this.$forceUpdate(); // Force Vue to re-render to update elapsed time display
-            });
-        }, 1000);
+        // Update trackerAge_{{trackerId}} spans every second to show elapsed time
+
     }
 }).mount('#app')
 </script>
@@ -228,7 +240,7 @@ createApp({
             <th colspan="2">
                 <span class="delchar" style="float: left" @click="delTracker(trackerId)">X</span>
                 {{ tracker.name }}
-                <span class="trackerAge">{{ this.elapsedTracker(trackerId) }}</span>
+                <span id="trackerAge_{{ trackerId }}" class="trackerAge">{{ this.elapsedTracker(trackerId) }}</span>
                 <button @click="undoLast(trackerId)" :disabled="!tracker.undo.player" style="float: right; margin-left: 10px;">Undo</button>
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
@@ -241,11 +253,7 @@ createApp({
                 }}
             </th>
         </tr>
-        <tr>
-            <th colspan="2" class="stats">
-                Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}
-            </th>
-        </tr>
+        <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
             <td>
