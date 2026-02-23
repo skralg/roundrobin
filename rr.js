@@ -14,18 +14,18 @@ function addChar () {
     remove = "<span class='delchar' onclick='delChar(this)'>X</span>";
     cell.innerHTML = remove + "<input type='checkbox' value='" + id + "' checked/> " + title;
     sortTable("character_pool");
-    // Add this character to all existing queues
-    let queues = document.querySelectorAll(".queue");
-    queues.forEach(queue => {
-        addCharToQueue(queue, id);
-        sortQueue(queue);
+    // Add this character to all existing trackers
+    let trackers = document.querySelectorAll(".tracker");
+    trackers.forEach(tracker => {
+        addCharToTracker(tracker, id);
+        sortTracker(tracker);
     });
     // Put the cursor back into the input box
     document.getElementById("new_char_name").focus();
 }
 
 function delChars() {
-    if (confirm("Are you sure you want to delete all characters?\nThis will remove them from all queues.")) {
+    if (confirm("Are you sure you want to delete all characters?\nThis will remove them from all trackers.")) {
         let table = document.getElementById("character_pool");
         // Remove all rows except the first two (header and add char row)
         while (table.rows.length > 2) {
@@ -35,14 +35,14 @@ function delChars() {
     }
 }
 function delChar(element) {
-    if (!confirm("Are you sure you want to delete this character?\nThis will remove them from all queues.")) {
+    if (!confirm("Are you sure you want to delete this character?\nThis will remove them from all trackers.")) {
         return;
     }
-    // Remove this character from all queues
+    // Remove this character from all trackers
     charname = element.parentElement.querySelector("input[type='checkbox']").value;
-    let queues = document.querySelectorAll(".queue");
-    queues.forEach(queue => {
-        let rows = Array.from(queue.rows).filter(row => !row.querySelector("th"));
+    let trackers = document.querySelectorAll(".tracker");
+    trackers.forEach(tracker => {
+        let rows = Array.from(tracker.rows).filter(row => !row.querySelector("th"));
         rows.forEach(row => {
             if (row.cells[0].innerText.toLowerCase() === charname.toLowerCase()) {
                 row.remove();
@@ -81,15 +81,15 @@ function sortTable(id) {
     dataRows.forEach(row => tbody.appendChild(row));
 }
 
-// Create a new Round-Robin Queue for the current group
-function addQueue(queueName="", shards=false) {
-    if (!queueName) {
-        queueName = prompt("Enter the name for the new Queue");
-        if (!queueName) return;
+// Create a new Round-Robin Tracker for the current group
+function addTracker(trackerName="", shards=false) {
+    if (!trackerName) {
+        trackerName = prompt("Enter the name for the new Tracker");
+        if (!trackerName) return;
     }
     characters = getCheckedCharacterList();
     if (characters.length === 0) {
-        alert("Please select at least one character from the Character List to add a queue.");
+        alert("Please select at least one character from the Character List to add a tracker.");
         return;
     }
     tbl = document.createElement("table");
@@ -102,10 +102,10 @@ function addQueue(queueName="", shards=false) {
     row = tbl.insertRow(-1);
     th = document.createElement("th");
     th.colSpan = 2;
-    deleteQ = "<span class='delchar' style='float: left' onclick='delQueue(this)'>X</span> ";
-    resetQ = " <span class='delchar' style='float: right'onclick='resetQueue(this)'>↺</span> ";
+    deleteQ = "<span class='delchar' style='float: left' onclick='delTracker(this)'>X</span> ";
+    resetQ = " <span class='delchar' style='float: right'onclick='resetTracker(this)'>↺</span> ";
     ageQ = "&nbsp; <span class='trackerAge'>0:00:00</span>";
-    th.innerHTML = deleteQ + queueName + ageQ + resetQ;
+    th.innerHTML = deleteQ + trackerName + ageQ + resetQ;
     row.appendChild(th);
     // Suggestion row
     row = tbl.insertRow(-1);
@@ -123,11 +123,11 @@ function addQueue(queueName="", shards=false) {
     th.innerText = "Drops: 0 | Per hour: 0";
     row.appendChild(th);
     
-    // Add checked characters to the queue
-    characters.forEach(char => addCharToQueue(tbl, char));
+    // Add checked characters to the tracker
+    characters.forEach(char => addCharToTracker(tbl, char));
 }
 
-function addCharToQueue(tbl, char) {
+function addCharToTracker(tbl, char) {
     row = tbl.insertRow(-1);
     cell = row.insertCell(0);
     cell.innerText = toTitleCase(char);
@@ -138,20 +138,20 @@ function addCharToQueue(tbl, char) {
     } else {
         controls.innerHTML += "<button class='tools' onclick='loot(this)'>+</button>";
     }
-    controls.innerHTML += " <input type='checkbox' onclick='sortQueue(this)' checked/>";
+    controls.innerHTML += " <input type='checkbox' onclick='sortTracker(this)' checked/>";
 }
 
-function resetQueue(element) {
-    if (confirm("Are you sure you want to reset this queue?")) {
-        queueTable = element.parentElement.parentElement.parentElement.parentElement;
-        inputs = queueTable.querySelectorAll("input.count");
+function resetTracker(element) {
+    if (confirm("Are you sure you want to reset this tracker?")) {
+        trackerTable = element.parentElement.parentElement.parentElement.parentElement;
+        inputs = trackerTable.querySelectorAll("input.count");
         inputs.forEach(input => input.value = "0");
-        queueTable.dataset.lastWinner = "";
-        queueTable.dataset.createdAt = Date.now();
+        trackerTable.dataset.lastWinner = "";
+        trackerTable.dataset.createdAt = Date.now();
         // Update suggestion text to the next player at the top of the list
-        suggestion = queueTable.querySelector(".suggest");
+        suggestion = trackerTable.querySelector(".suggest");
         suggestion.innerText = "Next: Everyone click NEED"
-        sortQueue(queueTable);
+        sortTracker(trackerTable);
     }
 }
 
@@ -164,8 +164,8 @@ function getCheckedCharacterList() {
 
 
 
-function delQueue(element) {
-    if (confirm("Are you sure you want to delete this queue?\nThis will remove all progress.")) {
+function delTracker(element) {
+    if (confirm("Are you sure you want to delete this tracker?\nThis will remove all progress.")) {
         element.parentElement.parentElement.parentElement.parentElement.remove();
     }
 }
@@ -205,8 +205,8 @@ function loot(element, count=1) {
         statsRow.innerText = `Drops: ${totalLoot} | Per hr: ${lootPerHour}`;
     }
 
-    // Sort the queue
-    sortQueue(parentTable);
+    // Sort the tracker
+    sortTracker(parentTable);
 
     // Update suggestion text to the player name in the first td of the first row that doesn't have a th (the next player up)
     suggestion = parentTable.querySelector(".suggest");
@@ -219,21 +219,21 @@ function loot(element, count=1) {
     }
 }
 
-function sortQueue(element) {
-    // Sort the rows of the queue table based on the value of the count input,
+function sortTracker(element) {
+    // Sort the rows of the tracker table based on the value of the count input,
     // in ascending order, then by cell 0 alphabetically
 
-    queueTable = element; // Walk parent tree until table element
-    while (queueTable && queueTable.nodeName !== "TABLE") {
-        queueTable = queueTable.parentElement;
+    trackerTable = element; // Walk parent tree until table element
+    while (trackerTable && trackerTable.nodeName !== "TABLE") {
+        trackerTable = trackerTable.parentElement;
     }
-    if (!queueTable) return;
-    rows = Array.from(queueTable.rows);
+    if (!trackerTable) return;
+    rows = Array.from(trackerTable.rows);
     // skip rows with th elements (header and suggestion)
     rows = rows.filter(row => !row.querySelector("th"));
 
-    if (queueTable.dataset.lastWinner) {
-        lastWinner = queueTable.dataset.lastWinner.toLowerCase();
+    if (trackerTable.dataset.lastWinner) {
+        lastWinner = trackerTable.dataset.lastWinner.toLowerCase();
     } else {
         lastWinner = null;
     }
@@ -260,7 +260,7 @@ function sortQueue(element) {
         }
         return aName.localeCompare(bName); // then by name asc
     });
-    rows.forEach(row => queueTable.appendChild(row));
+    rows.forEach(row => trackerTable.appendChild(row));
 }
 
 function onLoad() {
@@ -273,7 +273,7 @@ function onLoad() {
 
     // Update tracker ages every second
     setInterval(() => {
-        let trackers = document.querySelectorAll(".queue");
+        let trackers = document.querySelectorAll(".tracker");
         trackers.forEach(tracker => {
             let ageSpan = tracker.querySelector(".trackerAge");
             if (ageSpan) {
