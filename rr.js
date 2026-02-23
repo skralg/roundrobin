@@ -93,7 +93,7 @@ function addQueue(queueName="", shards=false) {
         return;
     }
     tbl = document.createElement("table");
-    tbl.classList.add("queue");
+    tbl.classList.add("tracker");
     tbl.dataset.lastWinner = "";
     tbl.dataset.shards = shards;
     tbl.dataset.createdAt = Date.now();
