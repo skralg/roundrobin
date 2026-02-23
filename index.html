@@ -8,13 +8,13 @@
         <script src="rr.js"></script>
     </head>
     <body onload="onLoad()">
-        <div id="qc" class="queue_container"></div>
+        <div id="qc" class="tracker_container"></div>
         &nbsp; &nbsp;
         <table class="charlist" id="character_pool">
             <tr><th><span class='delchar' onclick='delChars()'>X</span> Character List</th></tr>
             <tr><th><input type="text" id="new_char_name" placeholder="Enter New Player Name"/><button onclick="addChar()">Add</button></th></tr>
         </table>
-        <table class="queuemaker">
+        <table class="trackermaker">
             <tr><th colspan="2">Make New Tracker</th></tr>
             <tr><td><button onclick="addQueue(queueName='Central Shards', shards=true);">Add Central Shard Tracker</button></td></tr>
             <tr><td><button onclick="addQueue(queueName='Lower Shards', shards=true);">Add Lower Shard Tracker</button></td></tr>
