@@ -9,7 +9,8 @@ body { background-color: #888888;}
 .stats { border: 1px solid black; text-align: center; font-family: monospace; padding: 5px; color: #333; }
 .charlist { display: inline-block; vertical-align: top; border: 1px solid black; margin: 5px; padding: 5px; }
 .trackermaker { display: inline-block; vertical-align: top; border: 1px solid black; margin: 5px; padding: 5px; }
-.count { margin-right: 5px; text-align: center; background-color: #999999; }
+.count { margin-right: 5px; text-align: center; background-color: #999999; font-family: monospace;}
+.fairness { text-align: center; margin-left: 3px; margin-right: 5px; }
 .tracker .title { text-align: center; border: 1px solid black; margin: 0px; padding: 0px; border-radius: 0px; font-size: 12pt; }
 .tracker td {
     border: 2px solid #ccc; border-radius: 10px; background-color: #666; text-align: center;
