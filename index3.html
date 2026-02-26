@@ -15,24 +15,17 @@
                 <span class="delchar" style="float: left" @click="delTracker(trackerId)">X</span>
                 {{ tracker.name }}
                 <span id="trackerAge_{{ trackerId }}" class="trackerAge">{{ this.elapsedTracker(trackerId) }}</span>
-                <button @click="undoLast(trackerId)" :disabled="!tracker.undo.player" style="float: right; margin-left: 10px;">Undo</button>
+                <button @click="undoLast(trackerId)" :disabled="!tracker.undo || !tracker.undo.player" style="float: right; margin-left: 10px;">Undo</button>
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
-        <tr>
-            <th colspan="2" class="suggest">
-                {{ tracker.lastWinner == null ? 
-                    "Next: Everyone click NEED" : 
-                    `Last winner: ${lootData.players[tracker.lastWinner].name}` 
-                }}
-            </th>
-        </tr>
+        <tr><th colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
             <td>
-                <input type="text" class="count" size="2" v-model="lootData.players[id].trackers[trackerId].count">
-                <span v-if="tracker.method === 'fair'" class="fairness">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
+                <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
+                <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
                 <button style="margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
                     +{{ lootCount }}
                 </button>
@@ -65,31 +58,73 @@
         <br>
         <button @click="addTracker('');">Track Custom Singles</button><br>
         <button @click="addTracker('',[1,2,3,4,5]);">Track Custom Multiples</button>
-        <!--br><br><button @click="dev">DEV: Add Scooby Gang</button-->
+        <span v-if="devMode"><br><br><button @click="dev">DEV: Add Scooby Gang</button></span>
     </td></tr>
-    <tr><td><hr/></td></tr>
-    <tr><th>
-        Load Tracker: <input type="text" size="4" maxlength="4" id="tracker_id" style="font-family: monospace;"/>
-        <!--button @click="loadTracker">Load</button-->
+    <tr v-if="devMode"><td><hr/></td></tr>
+    <tr v-if="devMode"><th>
+        Load Tracker: <input type="text" size="5" maxlength="5" id="load_tracker_id" style="font-family: monospace;" :placeholder="shortDate()"/>
+        <button @click="loadTracker">Load</button>
+    </th></tr>
+    <tr v-if="devMode"><th>
+        Save Tracker: <input type="text" size="5" maxlength="5" id="save_tracker_id" style="font-family: monospace;" :placeholder="shortDate()"/>
+        <button @click="saveTracker">Save</button>
     </th></tr>
 </table>
 
 <!-- Debug stuff below -->
-<br>
-<!--textarea rows="30" cols="100" style="font-size: 10px;">{{ JSON.stringify(lootData, null, 2) }}</textarea-->
+<span v-if="devMode">
+    <br>
+    <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>
+    <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.players, null, 2) }}</textarea>
+</span>
 
 </div>
 </body>
 
-<!--script src="vue.global.js"></script-->
-<script src="vue.global.prod.js"></script>
+<script src="vue.global.js"></script>
+<!--script src="vue.global.prod.js"></script-->
 <script type="module">
-//import { createApp } from './vue';
-const { createApp } = Vue;
 
+// Firebase config to enable remote viewing of the tracker data
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+const firebaseConfig = {
+    apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
+    authDomain: "embertracker.firebaseapp.com",
+    databaseURL: "https://embertracker-default-rtdb.firebaseio.com",
+    projectId: "embertracker",
+    storageBucket: "embertracker.firebasestorage.app",
+    messagingSenderId: "930812014694",
+    appId: "1:930812014694:web:fecf713742575e36cafda7"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Vue config and app initialization
+const { createApp } = Vue;
 createApp({
-    data() { return { lootData: { trackers: {}, players: {} }, currentTime: new Date().getTime() } },
+    data() {
+        return {
+            lootData: {
+                trackers: {}, players: {}
+            },
+            currentTime: new Date().getTime(),
+            devMode: 0
+        }
+    },
     methods: {
+        suggest(trackerId) {
+            const tracker = this.lootData.trackers[trackerId];
+            if (tracker.lastWinner) {
+                tracker.suggest = "Next: " + this.lootData.players[tracker.players[0]].name;
+            } else {
+                tracker.suggest = "First Drop! Everyone *NEED*";
+            }
+            return tracker.suggest;
+        },
+        shortDate() {
+            return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
+        },
         // Converts a string to Title Case for display purposes
         toTitleCase(str) {
             if (!str) return "";
@@ -168,6 +203,7 @@ createApp({
                 // Initialize the new tracker in the lootData
                 this.lootData.trackers[id] = {
                     name: this.toTitleCase(name),
+                    suggest: "First Drop! Everyone *NEED*",
                     lootCounts: Array.isArray(lootCounts) ? lootCounts : [lootCounts],
                     createdAt: new Date().getTime(),
                     totalDrops: 0,
@@ -215,34 +251,43 @@ createApp({
         addLoot(trackerId, playerId, lootCount) {
             const tracker = this.lootData.trackers[trackerId];
             if (!tracker) return;
-            const playerTrackerData = this.lootData.players[playerId].trackers[trackerId];
-            if (!playerTrackerData) return;
-            tracker.undo = {
+            // Get a handle on the player that looted
+            const player = this.lootData.players[playerId].trackers[trackerId];
+            if (!player) return; // shouldn't happen
+            // Store undo data in the tracker so we can reverse this action if needed
+            //   I know I've clicked the wrong button before.
+            tracker.undo = { // TODO: Maybe store fairness values too?
                 player: playerId,
                 count: lootCount,
                 lastWinner: tracker.lastWinner
             };
-            playerTrackerData.count += lootCount;
-            playerTrackerData.fairness += lootCount;
-            tracker.totalDrops += lootCount;
+            // Ensure count is treated as a number in case it was edited manually which stringifies it.
+            player.count = parseInt(player.count) + lootCount;
+            player.fairness += lootCount;    // Update player fairness
+            tracker.totalDrops += lootCount; // Update total drops for this tracker
             // In a true round-robin, if someone grabs something out-of-order,
-            // lastWinner should not be changed so the order is not disrupted.
+            //   lastWinner should not be changed so the order is not disrupted.
             // In a fairness-based tracker, lastWinner nominally works the same,
-            // but fairness values are more important.
-            if (tracker.players[0] == playerId || !tracker.lastWinner) {
+            //   but fairness values are stronger than the alphabet.
+            if (tracker.players[0] == playerId || !tracker.lastWinner) { // [0] is the sort algorithm's next in line
                 tracker.lastWinner = playerId;
             }
 
-            // Adjust the fairness values for all players in this tracker
-            // Grab a sorted list of player fairness values in ascending order for this tracker
-            const fairnessValues = tracker.players.map(
-                id => this.lootData.players[id].trackers[trackerId].fairness).sort((a, b) => a - b
-            );
-            // if the lower isn't 0, subtract that number from all fairness values so we can add new players easily
+            // Reduce the fairness values for all enabled players in this tracker
+            //  Get a list of all checked players in this tracker
+            const checkedPlayers = tracker.players.filter(id => this.lootData.players[id].trackers[trackerId].checked);
+            //  Sort them by fairness values in ascending order
+            const fairnessValues = checkedPlayers.map(
+                id => this.lootData.players[id].trackers[trackerId].fairness
+            ).sort((a, b) => a - b);
+            //console.log("Fairness values after loot added:", fairnessValues);
+            //  If the lowest value isn't 0, subtract that number from all fairness values so we can add new players fairly.
+            //  Even reduce the unchecked players, but make sure they don't go below 0.
             const minFairness = fairnessValues[0];
             if (minFairness > 0) {
                 tracker.players.forEach(id => {
-                    this.lootData.players[id].trackers[trackerId].fairness -= minFairness;
+                    this.lootData.players[id].trackers[trackerId].fairness =
+                    Math.max(0, this.lootData.players[id].trackers[trackerId].fairness - minFairness);
                 });
             }
         },
@@ -283,6 +328,8 @@ createApp({
             this.addTracker("Central Runes", [1]);
         },
         sortedTracker(trackerId) {
+            // This function sorts the trackers to determine the suggested next player to be awarded loot.
+            // It does the actual visual sorting, and updating the suggestion text.
             const tracker = this.lootData.trackers[trackerId];
             if (!tracker) return [];
             return tracker.players.sort((a, b) => {
@@ -315,6 +362,24 @@ createApp({
 
             });
         },
+        loadTracker() {
+            const trackerId = document.getElementById('load_tracker_id').value;
+            alert('This feature is not implemented yet. Please check back later!');
+            get(child(ref(db), 'lootData/' + trackerId)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    let newData = snapshot.val();
+                    this.lootData = newData;
+                } else {
+                    alert("No data found for tracker ID: " + trackerId);
+                }
+            }).catch((error) => {
+                console.error("Error loading tracker data:", error);
+            });
+        },
+        saveTracker() {
+            const trackerId = document.getElementById('save_tracker_id').value;
+            set(ref(db, 'lootData/' + trackerId), this.lootData);
+        },
     },
     computed: {
         sortedPlayerIds() {
@@ -329,6 +394,17 @@ createApp({
         }
     },
     mounted() {
+        // Detect dev mode based on URL parameter and set flag accordingly
+        const urlParams = new URLSearchParams(window.location.search);
+        this.devMode = urlParams.get('dev') === '1';
+
+        // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
+        window.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.altKey && event.key === 'd') {
+                this.devMode = !this.devMode;
+            }
+        });
+
         // Add event listener to the input field to allow adding characters by pressing Enter
         const input = document.getElementById('new_char_name');
         if (input) {
@@ -338,6 +414,7 @@ createApp({
         }
         // Focus the input field on page load for convenience
         input.focus();
+
         // Update reactive currentTime every second so any computed/display methods refresh
         setInterval(() => {
             this.currentTime = new Date().getTime();

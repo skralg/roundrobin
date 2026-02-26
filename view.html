@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8>
+    <link rel="stylesheet" href="rr.css"/>
+    <link rel="icon" type="image/png" href="Ember-16.png"/>
+    <title>Ember's Adrift Round-Robin Loot Tracker</title>
+</head>
+<body>
+<div id="app">
+<div id="qc" class="tracker_container">
+    <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
+        <tr>
+            <th colspan="2">
+                {{ tracker.name }}
+                <span id="trackerAge_{{ trackerId }}" class="trackerAge">{{ this.elapsedTracker(trackerId) }}</span>
+            </th>
+        </tr>
+        <tr><th colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
+        <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
+        <tr v-for="id in sortedTracker(trackerId)" :key="id">
+            <td>{{ lootData.players[id].name }}</td>
+            <td>
+                <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
+                <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
+            </td>
+        </tr>
+    </table>
+</div>
+<table class="trackermaker">
+    <tr><th>
+        Load Tracker: <input type="text" size="5" maxlength="5" id="load_tracker_id" style="font-family: monospace;" :placeholder="shortDate()"/>
+        <button @click="loadTracker">Load</button>
+    </th></tr>
+</table>
+
+<!-- Debug stuff below -->
+<span v-if="devMode">
+    <br>
+    <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>
+    <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.players, null, 2) }}</textarea>
+</span>
+
+</div>
+</body>
+
+<script src="vue.global.js"></script>
+<!--script src="vue.global.prod.js"></script-->
+<script type="module">
+
+// Firebase config to enable remote viewing of the tracker data
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+const firebaseConfig = {
+    apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
+    authDomain: "embertracker.firebaseapp.com",
+    databaseURL: "https://embertracker-default-rtdb.firebaseio.com",
+    projectId: "embertracker",
+    storageBucket: "embertracker.firebasestorage.app",
+    messagingSenderId: "930812014694",
+    appId: "1:930812014694:web:fecf713742575e36cafda7"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// Vue config and app initialization
+const { createApp } = Vue;
+createApp({
+    data() {
+        return {
+            lootData: {
+                trackers: {}, players: {}
+            },
+            currentTime: new Date().getTime(),
+            devMode: 0
+        }
+    },
+    methods: {
+        suggest(trackerId) {
+            const tracker = this.lootData.trackers[trackerId];
+            if (tracker.lastWinner) {
+                tracker.suggest = "Next: " + this.lootData.players[tracker.players[0]].name;
+            } else {
+                tracker.suggest = "First Drop! Everyone *NEED*";
+            }
+            return tracker.suggest;
+        },
+        shortDate() {
+            return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
+        },
+        // Converts a string to Title Case for display purposes
+        toTitleCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/(^|\s)\w/g, (match) => match.toUpperCase());
+        },
+        // Converts a string to a lowercase, no-space version for consistent ID usage
+        toIdCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/\s+/g, '');
+        },
+        lootRate(trackerId) {
+            const tracker = this.lootData.trackers[trackerId];
+            if (!tracker) return "N/A";
+            // use reactive currentTime so this method is re-evaluated periodically
+            const elapsedHours = (this.currentTime - tracker.createdAt) / (1000 * 60 * 60);
+            if (elapsedHours === 0) return "N/A";
+            return (tracker.totalDrops / elapsedHours).toFixed(2);
+        },
+        elapsedTracker(trackerId) {
+            // format elapsed time in HH:MM:SS format
+            const tracker = this.lootData.trackers[trackerId];
+            if (!tracker) return "";
+            const elapsedMs = this.currentTime - tracker.createdAt;
+            const seconds = Math.floor(elapsedMs / 1000);
+            const sec = Math.floor(seconds % 60);
+            const min = Math.floor((seconds / 60) % 60);
+            const hr = Math.floor(seconds / 3600);
+            return `${hr > 0 ? hr + ':' : ''}${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
+        },
+        sortedTracker(trackerId) {
+            // This function sorts the trackers to determine the suggested next player to be awarded loot.
+            // It does the actual visual sorting, and updating the suggestion text.
+            const tracker = this.lootData.trackers[trackerId];
+            if (!tracker) return [];
+            return tracker.players.sort((a, b) => {
+                const A = this.lootData.players[a].trackers[trackerId];
+                const B = this.lootData.players[b].trackers[trackerId];
+                // Checked players are above unchecked players
+                if (A.checked && !B.checked) return -1;
+                if (!A.checked && B.checked) return 1;
+                if (tracker.method === 'fair') {
+                    // Players with more loot are lower priority
+                    if (A.fairness !== B.fairness) return A.fairness - B.fairness;
+                }
+                if (tracker.method === 'rr') {
+                    // Players with more loot in round-robin (took out of turn) are lower priority
+                    if (A.count !== B.count) return A.count - B.count;
+                }
+                const aName = this.lootData.players[a].name;
+                const bName = this.lootData.players[b].name;
+                if (!tracker.lastWinner) {
+                    // If no winner yet, sort alphabetically
+                    return aName.localeCompare(bName);
+                }
+                // If there is a winner, stagger/rotate list accordingly
+                const cName = this.lootData.players[tracker.lastWinner].name;
+                if (aName === cName) return 1; // last winner goes to bottom
+                if (bName === cName) return -1; // last winner goes to bottom
+                if (aName.localeCompare(cName) > 0 && bName.localeCompare(cName) < 0) return -1;
+                if (aName.localeCompare(cName) < 0 && bName.localeCompare(cName) > 0) return 1;
+                return aName.localeCompare(bName); // otherwise sort alphabetically
+
+            });
+        },
+        loadTracker() {
+            const trackerId = document.getElementById('load_tracker_id').value;
+            get(child(ref(db), 'lootData/' + trackerId)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    this.lootData = snapshot.val();
+                } else {
+                    alert("No data found for tracker ID: " + trackerId);
+                }
+            }).catch((error) => {
+                console.error("Error loading tracker data:", error);
+            });
+        },
+    },
+    computed: {
+        sortedPlayerIds() {
+            return Object.keys(this.lootData.players).sort((a, b) => {
+                const A = this.lootData.players[a];
+                const B = this.lootData.players[b];
+                // Sort by checked status first, then alphabetically by name
+                if (A.checked && !B.checked) return -1;
+                if (!A.checked && B.checked) return 1;
+                return A.name.localeCompare(B.name);
+            })
+        }
+    },
+    mounted() {
+        // Detect dev mode based on URL parameter and set flag accordingly
+        const urlParams = new URLSearchParams(window.location.search);
+        this.devMode = urlParams.get('dev') === '1';
+
+        // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
+        window.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.altKey && event.key === 'd') {
+                this.devMode = !this.devMode;
+            }
+        });
+
+        // Add event listener to the input field to allow adding characters by pressing Enter
+        const input = document.getElementById('load_tracker_id');
+        // Focus the input field on tracker load for convenience
+        input.focus();
+
+        // Update reactive currentTime every second so any computed/display methods refresh
+        setInterval(() => {
+            this.currentTime = new Date().getTime();
+        }, 1000);
+    }
+}).mount('#app')
+</script>
+</html>
