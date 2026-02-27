@@ -26,7 +26,7 @@
             <td>
                 <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
                 <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
-                <button style="margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
+                <button style="margin-left: 5px; margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
                     +{{ lootCount }}
                 </button>
                 <input type="checkbox" v-model="lootData.players[id].trackers[trackerId].checked"/>
@@ -60,14 +60,16 @@
         <button @click="addTracker('',[1,2,3,4,5]);">Track Custom Multiples</button>
         <span v-if="devMode"><br><br><button @click="dev">DEV: Add Scooby Gang</button></span>
     </td></tr>
-    <tr v-if="devMode"><td><hr/></td></tr>
-    <tr v-if="devMode"><th>
-        Load Tracker: <input type="text" size="5" maxlength="5" id="load_tracker_id" style="font-family: monospace;" :placeholder="shortDate()"/>
+    <tr><td><hr/></td></tr>
+    <tr><td>
+        <b>Tracker ID</b> &nbsp;
+        <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerID" :placeholder="shortDate()"/>
+    </td></tr>
+    <tr><th>
         <button @click="loadTracker">Load</button>
-    </th></tr>
-    <tr v-if="devMode"><th>
-        Save Tracker: <input type="text" size="5" maxlength="5" id="save_tracker_id" style="font-family: monospace;" :placeholder="shortDate()"/>
-        <button @click="saveTracker">Save</button>
+        &nbsp;
+        <button v-if="this.authed == false" @click="authTracker">Auth to go Live</button>
+        <button v-if="this.authed == true" @click="saveTracker">Save</button>
     </th></tr>
 </table>
 
@@ -88,6 +90,7 @@
 // Firebase config to enable remote viewing of the tracker data
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -105,6 +108,7 @@ const { createApp } = Vue;
 createApp({
     data() {
         return {
+            authed: false,
             lootData: {
                 trackers: {}, players: {}
             },
@@ -207,10 +211,10 @@ createApp({
                     lootCounts: Array.isArray(lootCounts) ? lootCounts : [lootCounts],
                     createdAt: new Date().getTime(),
                     totalDrops: 0,
-                    lastWinner: null,
+                    lastWinner: false,
                     players: checkedPlayers,
                     method: method,
-                    undo: {}
+                    undo: false
                 };
             }
         },
@@ -230,7 +234,7 @@ createApp({
                 const tracker = this.lootData.trackers[trackerId];
                 tracker.createdAt = new Date().getTime();
                 tracker.totalDrops = 0;
-                tracker.lastWinner = null;
+                tracker.lastWinner = false;
                 // Reset each player's count for this tracker
                 tracker.players.forEach(playerId => {
                     if (this.lootData.players[playerId].trackers[trackerId]) {
@@ -280,7 +284,6 @@ createApp({
             const fairnessValues = checkedPlayers.map(
                 id => this.lootData.players[id].trackers[trackerId].fairness
             ).sort((a, b) => a - b);
-            //console.log("Fairness values after loot added:", fairnessValues);
             //  If the lowest value isn't 0, subtract that number from all fairness values so we can add new players fairly.
             //  Even reduce the unchecked players, but make sure they don't go below 0.
             const minFairness = fairnessValues[0];
@@ -303,7 +306,7 @@ createApp({
             playerTrackerData.fairness -= lootCount;
             tracker.totalDrops -= lootCount;
             tracker.lastWinner = lastWinner;
-            tracker.undo = {};
+            tracker.undo = false;
         },
         elapsedTracker(trackerId) {
             // format elapsed time in HH:MM:SS format
@@ -363,8 +366,7 @@ createApp({
             });
         },
         loadTracker() {
-            const trackerId = document.getElementById('load_tracker_id').value;
-            alert('This feature is not implemented yet. Please check back later!');
+            const trackerId = document.getElementById('external_tracker_id').value;
             get(child(ref(db), 'lootData/' + trackerId)).then((snapshot) => {
                 if (snapshot.exists()) {
                     let newData = snapshot.val();
@@ -377,8 +379,24 @@ createApp({
             });
         },
         saveTracker() {
-            const trackerId = document.getElementById('save_tracker_id').value;
+            if (!this.authed) return;
+            const trackerId = document.getElementById('external_tracker_id').value;
             set(ref(db, 'lootData/' + trackerId), this.lootData);
+        },
+        authTracker() {
+            if (!this.authed) {
+                let pass = prompt("Please enter a valid password to authenticate.");
+                if (!pass) return;
+                const auth = getAuth();
+                signInWithEmailAndPassword(auth, 'anon@ymo.us', pass).then((userCredential) => {
+                    //console.log('Anonymous login approved');
+                    this.authed = true;
+                }).catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error("Sign-in error: ", errorMessage);
+                });
+            }
         },
     },
     computed: {
@@ -392,6 +410,12 @@ createApp({
                 return A.name.localeCompare(B.name);
             })
         }
+    },
+    watch: {
+        lootData: {
+            handler(newData, oldData) { if (this.authed) this.saveTracker(); },
+            deep: true
+        },
     },
     mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly

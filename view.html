@@ -19,9 +19,9 @@
         <tr><th colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-for="id in sortedTracker(trackerId)" :key="id">
-            <td>{{ lootData.players[id].name }}</td>
-            <td>
-                <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
+            <td :class="{ 'disabled' : !lootData.players[id].trackers[trackerId].checked}">{{ lootData.players[id].name }}</td>
+            <td stle="text-align: center;">
+                <span class="viewcount" v-html="lootData.players[id].trackers[trackerId].count"></span>
                 <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
             </td>
         </tr>
@@ -29,14 +29,23 @@
 </div>
 <table class="trackermaker">
     <tr><th>
-        Load Tracker: <input type="text" size="5" maxlength="5" id="load_tracker_id" style="font-family: monospace;" :placeholder="shortDate()"/>
+        Tracker ID &nbsp; <input type="text" size="10" maxlength="10" id="load_tracker_id" class="trackerID" :placeholder="shortDate()"/>
+        &nbsp;
         <button @click="loadTracker">Load</button>
+        &nbsp;
+        <button v-if="Object.keys(lootData.trackers).length && !this.explain" @click="this.explain=true">Um, Explain.</button>
+        <button v-if="this.explain" @click="this.explain=false">Hide Explanation</button>
     </th></tr>
 </table>
+<br>
+<textarea v-if="this.explain" id="explain" cols="80" rows="20">
+    Single-drop Trackers (such as Rune trackers) show the count of items won per player.  Initial loot order is set alphabetically after the initial drop (Alphabetical Round-Robin).
+    
+    Multi-drop Trackers (such as Shard trackers) show the count of items won per player, plus the fairness coefficient in brackets.  This value is a reflection of the relative differences of items won per player.  If players 1 through 4 have 10 shards, and player 5 has 15, there is only a 5-shard difference in fairness [10, 10, 10, 10, 15], so this gets automatically reduced to [0, 0, 0, 0, 5].  The benefit here is that if a 6th player joins the group (inserted alphabetically), they have an initial fairness level of 0, matching whoever currently has the lowest fairness, and loot is fair from then on while retaining existing fairness.  Also, if a person goes AFK or leaves, their fairness level continues to get reduced for the time they are absent, to keep it fair for whoever is still participating.
+</textarea>
 
 <!-- Debug stuff below -->
 <span v-if="devMode">
-    <br>
     <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>
     <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.players, null, 2) }}</textarea>
 </span>
@@ -71,7 +80,8 @@ createApp({
                 trackers: {}, players: {}
             },
             currentTime: new Date().getTime(),
-            devMode: 0
+            devMode: 0,
+            explain: false
         }
     },
     methods: {
@@ -158,18 +168,6 @@ createApp({
                 this.lootData = snapshot.val();
             });
         },
-    },
-    computed: {
-        sortedPlayerIds() {
-            return Object.keys(this.lootData.players).sort((a, b) => {
-                const A = this.lootData.players[a];
-                const B = this.lootData.players[b];
-                // Sort by checked status first, then alphabetically by name
-                if (A.checked && !B.checked) return -1;
-                if (!A.checked && B.checked) return 1;
-                return A.name.localeCompare(B.name);
-            })
-        }
     },
     mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly
