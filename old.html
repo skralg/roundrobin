@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset=utf-8>
+        <link rel="icon" type="image/png" href="Ember-16.png"/>
+        <title>Ember's Adrift Round-Robin Loot Tracker</title>
+        <link rel="stylesheet" href="rr.css"/>
+        <script src="rr.js"></script>
+    </head>
+    <body onload="onLoad()">
+        <div id="qc" class="tracker_container"></div>
+        &nbsp; &nbsp;
+        <table class="charlist" id="character_pool">
+            <tr><th><span class='delchar' onclick='delChars()'>X</span> Character List</th></tr>
+            <tr><th><input type="text" id="new_char_name" placeholder="Enter New Player Name"/><button onclick="addChar()">Add</button></th></tr>
+        </table>
+        <table class="trackermaker">
+            <tr><th colspan="2">Make New Tracker</th></tr>
+            <tr><td><button onclick="addTracker(trackerName='Central Shards', shards=true);">Add Central Shard Tracker</button></td></tr>
+            <tr><td><button onclick="addTracker(trackerName='Lower Shards', shards=true);">Add Lower Shard Tracker</button></td></tr>
+            <tr><td><hr/></td></tr>
+            <tr><td><button onclick="addTracker(trackerName='Central Runes', shards=false);">Add Central Rune Tracker</button></td></tr>
+            <tr><td><button onclick="addTracker(trackerName='Lower Runes', shards=false);">Add Lower Rune Tracker</button></td></tr>
+            <tr><td><hr/></td></tr>
+            <tr><td><button onclick="addTracker(trackerName='Volatile Ember Flux', shards=false);">Add Volatile Ember Flux Tracker</button></td></tr>
+            <tr><td><hr/></td></tr>
+            <tr><td><button onclick="addTracker(false);">Add Custom Tracker</button></td></tr>
+            <tr><td><button onclick="addTracker(true);">Add Custom Shard Tracker</button></td></tr>
+        </table>
+    </body>
+</html>
