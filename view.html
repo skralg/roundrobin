@@ -31,7 +31,7 @@
     <tr><th>
         Tracker ID &nbsp; <input type="text" size="10" maxlength="10" id="load_tracker_id" class="trackerID" :placeholder="shortDate()"/>
         &nbsp;
-        <button @click="loadTracker">Load</button>
+        <button @click="loadTracker()">Load</button>
         &nbsp;
         <button v-if="Object.keys(lootData.trackers).length && !this.explain" @click="this.explain=true">Um, Explain.</button>
         <button v-if="this.explain" @click="this.explain=false">Hide Explanation</button>
@@ -151,8 +151,10 @@ createApp({
 
             });
         },
-        loadTracker() {
-            const trackerId = document.getElementById('load_tracker_id').value;
+        loadTracker(trackerId=null) {
+            if (!trackerId) {
+                trackerId = document.getElementById('load_tracker_id').value;
+            }
             get(child(ref(db), 'lootData/' + trackerId)).then((snapshot) => {
                 if (snapshot.exists()) {
                     this.lootData = snapshot.val();
@@ -173,6 +175,14 @@ createApp({
         // Detect dev mode based on URL parameter and set flag accordingly
         const urlParams = new URLSearchParams(window.location.search);
         this.devMode = urlParams.get('dev') === '1';
+        const input = document.getElementById('load_tracker_id');
+        const trackerId = urlParams.get('track');
+        if (trackerId) {
+            this.loadTracker(trackerId);
+            input.value = trackerId;
+        } else {
+            input.focus();
+        }
 
         // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
         window.addEventListener('keydown', (event) => {
@@ -180,11 +190,6 @@ createApp({
                 this.devMode = !this.devMode;
             }
         });
-
-        // Add event listener to the input field to allow adding characters by pressing Enter
-        const input = document.getElementById('load_tracker_id');
-        // Focus the input field on tracker load for convenience
-        input.focus();
 
         // Update reactive currentTime every second so any computed/display methods refresh
         setInterval(() => {

@@ -63,7 +63,7 @@
     <tr><td><hr/></td></tr>
     <tr><td>
         <b>Tracker ID</b> &nbsp;
-        <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerID" :placeholder="shortDate()"/>
+        <input type="text" size="10" maxlength="10" v-model="this.trackerId" id="external_tracker_id" class="trackerID" :placeholder="shortDate()"/>
     </td></tr>
     <tr><th>
         <button @click="loadTracker">Load</button>
@@ -71,6 +71,9 @@
         <button v-if="this.authed == false" @click="authTracker">Auth to go Live</button>
         <button v-if="this.authed == true" @click="saveTracker">Save</button>
     </th></tr>
+    <tr v-if="this.authed && this.trackerId"><td>
+       <b>Share</b>: <a :href="`view.html?track=${this.trackerId}`">View-only Link</a>
+    </td><tr>
 </table>
 
 <!-- Debug stuff below -->
@@ -113,6 +116,7 @@ createApp({
                 trackers: {}, players: {}
             },
             currentTime: new Date().getTime(),
+            trackerId: null,
             devMode: 0
         }
     },
@@ -398,6 +402,9 @@ createApp({
                 });
             }
         },
+        shareLink() {
+            return "view.html?track=debug";
+        }
     },
     computed: {
         sortedPlayerIds() {
