@@ -50,7 +50,7 @@
 
 // Firebase config to enable remote viewing of the tracker data
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -87,16 +87,6 @@ createApp({
         },
         shortDate() {
             return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
-        },
-        // Converts a string to Title Case for display purposes
-        toTitleCase(str) {
-            if (!str) return "";
-            return str.toLowerCase().replace(/(^|\s)\w/g, (match) => match.toUpperCase());
-        },
-        // Converts a string to a lowercase, no-space version for consistent ID usage
-        toIdCase(str) {
-            if (!str) return "";
-            return str.toLowerCase().replace(/\s+/g, '');
         },
         lootRate(trackerId) {
             const tracker = this.lootData.trackers[trackerId];
@@ -162,6 +152,11 @@ createApp({
                 }
             }).catch((error) => {
                 console.error("Error loading tracker data:", error);
+            });
+            // Handle data updates
+            const dataRef = ref(db, 'lootData/' + trackerId);
+            onValue(dataRef, (snapshot) => {
+                this.lootData = snapshot.val();
             });
         },
     },
