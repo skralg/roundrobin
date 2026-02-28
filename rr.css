@@ -28,5 +28,5 @@ body { background-color: #888888;}
 .trackerID {
     text-align: center; font-family: monospace;
 }
-.disabled { text-decoration: line-through; }
+.disabled { text-decoration: line-through; color: #990000; background-color: #cccccc !important; }
 #explain { border: 1px solid black; }
