@@ -3,6 +3,7 @@
 <head>
     <meta charset=utf-8>
     <link rel="stylesheet" href="rr.css"/>
+    <link rel="stylesheet" href="vuetify.min.css"/>
     <link rel="icon" type="image/png" href="Ember-16.png"/>
     <title>Ember's Adrift Round-Robin Loot Tracker</title>
 </head>
@@ -29,7 +30,7 @@
 </div>
 <table class="trackermaker">
     <tr><th>
-        Tracker ID &nbsp; <input type="text" size="10" maxlength="10" id="load_tracker_id" class="trackerID" :placeholder="shortDate()"/>
+        Tracker ID &nbsp; <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerID" :placeholder="shortDate()"/>
         &nbsp;
         <button @click="loadTracker()">Load</button>
         &nbsp;
@@ -52,13 +53,16 @@
 
 </div>
 
-<script src="vue.global.js"></script>
+<script src="vue.global.js"></script><!-- v3.5.28 -->
+<script src="vuetify.js"></script><!-- v4.0.0 -->
+<script type="module" src="common.js"></script>
 <!--script src="vue.global.prod.js"></script-->
 <script type="module">
 
 // Firebase config to enable remote viewing of the tracker data
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -74,6 +78,9 @@ var unsubscribe = null;
 
 // Vue config and app initialization
 const { createApp } = Vue;
+// Vuetify initialization
+const { createVuetify } = Vuetify;
+
 createApp({
     data() {
         return {
@@ -87,70 +94,14 @@ createApp({
         }
     },
     methods: {
-        suggest(trackerId) {
-            const tracker = this.lootData.trackers[trackerId];
-            if (tracker.lastWinner) {
-                tracker.suggest = "Next: " + this.lootData.players[tracker.players[0]].name;
-            } else {
-                tracker.suggest = "First Drop! Everyone *NEED*";
-            }
-            return tracker.suggest;
-        },
-        shortDate() {
-            return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
-        },
-        lootRate(trackerId) {
-            const tracker = this.lootData.trackers[trackerId];
-            if (!tracker) return "N/A";
-            // use reactive currentTime so this method is re-evaluated periodically
-            const elapsedHours = (this.currentTime - tracker.createdAt) / (1000 * 60 * 60);
-            if (elapsedHours === 0) return "N/A";
-            return (tracker.totalDrops / elapsedHours).toFixed(2);
-        },
-        elapsedTracker(trackerId) {
-            // format elapsed time in HH:MM:SS format
-            const tracker = this.lootData.trackers[trackerId];
-            if (!tracker) return "";
-            const elapsedMs = this.currentTime - tracker.createdAt;
-            const seconds = Math.floor(elapsedMs / 1000);
-            const sec = Math.floor(seconds % 60);
-            const min = Math.floor((seconds / 60) % 60);
-            const hr = Math.floor(seconds / 3600);
-            return `${hr > 0 ? hr + ':' : ''}${min < 10 ? '0' : ''}${min}:${sec < 10 ? '0' : ''}${sec}`;
-        },
-        sortedTracker(trackerId) {
-            // This function sorts the trackers to determine the suggested next player to be awarded loot.
-            // It does the actual visual sorting, and updating the suggestion text.
-            const tracker = this.lootData.trackers[trackerId];
-            if (!tracker) return [];
-            return tracker.players.sort((a, b) => {
-                const A = this.lootData.players[a].trackers[trackerId];
-                const B = this.lootData.players[b].trackers[trackerId];
-                // Checked players are above unchecked players
-                if (A.checked && !B.checked) return -1;
-                if (!A.checked && B.checked) return 1;
-                if (tracker.method === 'fair') {
-                    // Players with more loot are lower priority
-                    if (A.fairness !== B.fairness) return A.fairness - B.fairness;
-                }
-                const aName = this.lootData.players[a].name;
-                const bName = this.lootData.players[b].name;
-                if (!tracker.lastWinner) {
-                    // If no winner yet, sort alphabetically
-                    return aName.localeCompare(bName);
-                }
-                // If there is a winner, stagger/rotate list accordingly
-                const cName = this.lootData.players[tracker.lastWinner].name;
-                if (aName === cName) return 1; // last winner goes to bottom
-                if (bName === cName) return -1; // last winner goes to bottom
-                if (aName.localeCompare(cName) > 0 && bName.localeCompare(cName) < 0) return -1;
-                if (aName.localeCompare(cName) < 0 && bName.localeCompare(cName) > 0) return 1;
-                return aName.localeCompare(bName); // otherwise sort alphabetically
-            });
-        },
+        shortDate() { return shortDate(); },
+        lootRate(trackerId) { return lootRate(this.currentTime, this.lootData.trackers[trackerId]); },
+        elapsedTracker(trackerId) { return elapsedTracker(this.currentTime, this.lootData.trackers[trackerId]); },
+        sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },
+        suggest(trackerId) { return suggest(this.lootData.trackers[trackerId], this.lootData.players); },
         loadTracker(trackerId=null) {
             if (!trackerId) {
-                trackerId = document.getElementById('load_tracker_id').value;
+                trackerId = document.getElementById('external_tracker_id').value;
             }
             const tPath = 'lootData/' + trackerId;
             get(child(ref(db), tPath)).then((snapshot) => {
@@ -176,13 +127,13 @@ createApp({
         // Detect dev mode based on URL parameter and set flag accordingly
         const urlParams = new URLSearchParams(window.location.search);
         this.devMode = urlParams.get('dev') === '1';
-        const input = document.getElementById('load_tracker_id');
+        const trackerInput = document.getElementById('external_tracker_id');
         const trackerId = urlParams.get('track');
         if (trackerId) {
             this.loadTracker(trackerId);
-            input.value = trackerId;
+            trackerInput.value = trackerId;
         } else {
-            input.focus();
+            trackerInput.focus();
         }
 
         // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
