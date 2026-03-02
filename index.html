@@ -92,7 +92,7 @@
 
 // Firebase config to enable remote viewing of the tracker data
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getDatabase, ref, set, child, get } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
@@ -105,6 +105,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+var unsubscribe = null;
 
 // Vue config and app initialization
 const { createApp } = Vue;
@@ -349,10 +350,6 @@ createApp({
                     // Players with more loot are lower priority
                     if (A.fairness !== B.fairness) return A.fairness - B.fairness;
                 }
-                if (tracker.method === 'rr') {
-                    // Players with more loot in round-robin (took out of turn) are lower priority
-                    if (A.count !== B.count) return A.count - B.count;
-                }
                 const aName = this.lootData.players[a].name;
                 const bName = this.lootData.players[b].name;
                 if (!tracker.lastWinner) {
@@ -366,12 +363,12 @@ createApp({
                 if (aName.localeCompare(cName) > 0 && bName.localeCompare(cName) < 0) return -1;
                 if (aName.localeCompare(cName) < 0 && bName.localeCompare(cName) > 0) return 1;
                 return aName.localeCompare(bName); // otherwise sort alphabetically
-
             });
         },
         loadTracker() {
             const trackerId = document.getElementById('external_tracker_id').value;
-            get(child(ref(db), 'lootData/' + trackerId)).then((snapshot) => {
+            const tPath = 'lootData/' + trackerId;
+            get(child(ref(db), tPath)).then((snapshot) => {
                 if (snapshot.exists()) {
                     let newData = snapshot.val();
                     this.lootData = newData;
@@ -380,6 +377,14 @@ createApp({
                 }
             }).catch((error) => {
                 console.error("Error loading tracker data:", error);
+            });
+
+            // Cancel any existing subscription to changing data
+            if (unsubscribe) unsubscribe();
+            // Subscribe to this newly loaded Tracker
+            const dataRef = ref(db, tPath);
+            unsubscribe = onValue(dataRef, (snapshot) => {
+                this.lootData = snapshot.val();
             });
         },
         saveTracker() {

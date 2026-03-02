@@ -70,6 +70,7 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
+var unsubscribe = null;
 
 // Vue config and app initialization
 const { createApp } = Vue;
@@ -80,8 +81,9 @@ createApp({
                 trackers: {}, players: {}
             },
             currentTime: new Date().getTime(),
-            devMode: 0,
-            explain: false
+            trackerId: null,
+            explain: false,
+            devMode: 0
         }
     },
     methods: {
@@ -131,10 +133,6 @@ createApp({
                     // Players with more loot are lower priority
                     if (A.fairness !== B.fairness) return A.fairness - B.fairness;
                 }
-                if (tracker.method === 'rr') {
-                    // Players with more loot in round-robin (took out of turn) are lower priority
-                    if (A.count !== B.count) return A.count - B.count;
-                }
                 const aName = this.lootData.players[a].name;
                 const bName = this.lootData.players[b].name;
                 if (!tracker.lastWinner) {
@@ -148,14 +146,14 @@ createApp({
                 if (aName.localeCompare(cName) > 0 && bName.localeCompare(cName) < 0) return -1;
                 if (aName.localeCompare(cName) < 0 && bName.localeCompare(cName) > 0) return 1;
                 return aName.localeCompare(bName); // otherwise sort alphabetically
-
             });
         },
         loadTracker(trackerId=null) {
             if (!trackerId) {
                 trackerId = document.getElementById('load_tracker_id').value;
             }
-            get(child(ref(db), 'lootData/' + trackerId)).then((snapshot) => {
+            const tPath = 'lootData/' + trackerId;
+            get(child(ref(db), tPath)).then((snapshot) => {
                 if (snapshot.exists()) {
                     this.lootData = snapshot.val();
                 } else {
@@ -164,9 +162,12 @@ createApp({
             }).catch((error) => {
                 console.error("Error loading tracker data:", error);
             });
+
+            // Cancel any existing subscriptions to changing data
+            if (unsubscribe) unsubscribe();
             // Handle data updates
-            const dataRef = ref(db, 'lootData/' + trackerId);
-            onValue(dataRef, (snapshot) => {
+            const dataRef = ref(db, tPath);
+            unsubscribe = onValue(dataRef, (snapshot) => {
                 this.lootData = snapshot.val();
             });
         },
