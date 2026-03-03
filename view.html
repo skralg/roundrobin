@@ -32,10 +32,11 @@
     <tr><th>
         Tracker ID &nbsp; <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerID" :placeholder="shortDate()"/>
         &nbsp;
-        <button @click="loadTracker()">Load</button>
+        <v-btn @click="loadTracker()">Load</v-btn>
         &nbsp;
-        <button v-if="Object.keys(lootData.trackers).length && !this.explain" @click="this.explain=true">Um, Explain.</button>
-        <button v-if="this.explain" @click="this.explain=false">Hide Explanation</button>
+        <v-btn v-if="Object.keys(lootData.trackers).length && !this.explain" @click="this.explain=true">Um, Explain.</v-btn>
+        <v-btn v-if="this.explain" @click="this.explain=false">Hide Explanation</v-btn>
+        <v-btn @click="theme.cycle()" text="cycle theme"></v-btn>
     </th></tr>
 </table>
 <br>
@@ -79,9 +80,21 @@ var unsubscribe = null;
 // Vue config and app initialization
 const { createApp } = Vue;
 // Vuetify initialization
-const { createVuetify } = Vuetify;
+const { createVuetify, useTheme } = Vuetify;
+const vuetify = createVuetify({
+    theme: {
+        defaultTheme: 'Theme1',
+        themes: {
+            Theme1: {
+                colors: {
+                    background: '#abcdef',
+                },
+            },
+        },
+    },
+});
 
-createApp({
+const App = {
     data() {
         return {
             lootData: {
@@ -102,6 +115,10 @@ createApp({
         loadTracker(trackerId=null) {
             if (!trackerId) {
                 trackerId = document.getElementById('external_tracker_id').value;
+            }
+            if (!trackerId) {
+                alert('You must enter a Tracker ID first.');
+                return;
             }
             const tPath = 'lootData/' + trackerId;
             get(child(ref(db), tPath)).then((snapshot) => {
@@ -147,8 +164,11 @@ createApp({
         setInterval(() => {
             this.currentTime = new Date().getTime();
         }, 1000);
+        
+        const theme = useTheme();
     }
-}).mount('#app')
+};
+createApp(App).use(vuetify).mount('#app')
 </script>
 </body>
 </html>

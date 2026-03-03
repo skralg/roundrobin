@@ -67,7 +67,7 @@
         <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerID" :placeholder="shortDate()"/>
     </td></tr>
     <tr><th>
-        <button @click="loadTracker">Load</button>
+        <button @click="loadTracker()">Load</button>
         &nbsp;
         <button v-if="this.authed == false" @click="authTracker">Auth to go Live</button>
         <button v-if="this.authed == true" @click="saveTracker">Save</button>
@@ -116,7 +116,7 @@ const { createApp } = Vue;
 // Vuetify initialization
 const { createVuetify } = Vuetify;
 
-createApp({
+const App = {
     data() {
         return {
             authed: false,
@@ -320,6 +320,10 @@ createApp({
             if (!trackerId) {
                 trackerId = document.getElementById('external_tracker_id').value;
             }
+            if (!trackerId) {
+                alert('You must enter a Tracker ID first.');
+                return;
+            }
             const tPath = 'lootData/' + trackerId;
             get(child(ref(db), tPath)).then((snapshot) => {
                 if (snapshot.exists()) {
@@ -415,6 +419,7 @@ createApp({
             this.currentTime = new Date().getTime();
         }, 1000);
     }
-}).mount('#app')
+};
+createApp(App).mount('#app')
 </script>
 </html>
