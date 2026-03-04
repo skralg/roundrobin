@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="rr.css"/>
     <link rel="stylesheet" href="vuetify.min.css"/>
     <link rel="icon" type="image/png" href="Ember-16.png"/>
-    <title>Ember's Adrift Round-Robin Loot Tracker</title>
+    <title>Embers Adrift Round-Robin Loot Tracker</title>
 </head>
 <body>
 <div id="app">
@@ -21,7 +21,7 @@
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-for="id in sortedTracker(trackerId)" :key="id">
             <td :class="{ 'disabled' : !lootData.players[id].trackers[trackerId].checked}">{{ lootData.players[id].name }}</td>
-            <td stle="text-align: center;">
+            <td>
                 <span class="viewcount" v-html="lootData.players[id].trackers[trackerId].count"></span>
                 <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
             </td>
