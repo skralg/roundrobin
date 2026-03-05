@@ -73,7 +73,7 @@
         <button v-if="this.authed == true" @click="saveTracker">Save</button>
     </th></tr>
     <tr v-if="this.authed && this.trackerId"><td>
-       <b>Share</b>: <a :href="`view.html?track=${this.trackerId}`">View-only Link</a>
+       <b>Share</b>: <a :href="`view.html?track=${this.trackerId}`" target="_blank">View-only Link</a>
     </td><tr>
 </table>
 
@@ -324,6 +324,7 @@ const App = {
                 alert('You must enter a Tracker ID first.');
                 return;
             }
+            this.trackerId = trackerId;
             const tPath = 'lootData/' + trackerId;
             get(child(ref(db), tPath)).then((snapshot) => {
                 if (snapshot.exists()) {
