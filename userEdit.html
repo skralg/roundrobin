@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="Ember-16.png"/>
+  <title>Embers Adrift Tracker User Editor</title>
+  <!-- Import Vuetify CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.12.1/dist/vuetify.min.css" rel="stylesheet">
+  <!-- Import MDI font CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css" rel="stylesheet">
+  <!-- Import Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Import Vuetify 3 JS (ensure version compatibility with CSS) -->
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.12.1/dist/vuetify.min.js"></script>
+  <style>
+    .alt-rows .v-row:nth-child(odd) {
+      background-color: #f2f2f2; /* Light gray for odd rows */
+    }
+    .alt-rows .v-row:nth-child(even) {
+      background-color: #ffffff; /* White for even rows */
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-main>
+        <v-container class="ma-5 pa-5 justify-center align-center bg-primary">
+          <v-btn v-if="this.authed == false" @click="auth">Log In</v-btn>
+          <v-btn v-if="this.authed == true" disabled><i>Logged In</i></v-btn>
+          <v-card>
+            <v-card-title>
+            <v-icon icon="mdi-trash-can-outline" @click="delChars()"></v-icon> Character List
+            </v-card-title>
+            <v-text-field id="new_char_name" clearable
+                type="input" variant="solo" density="compact"
+                label="Player Name" hint="Press Enter to add this new Player to the Character List"
+                prepend-icon="mdi-account-box" append-icon="mdi-account-plus-outline"
+                clearable persistent-clear persistent-counter
+                @click:append="addChar()" @keyup.enter="addChar()"
+            ></v-text-field>
+            <hr>
+            <table style="margin: 5px;">
+              <tbody>
+                <tr v-for="id in sortedPlayerIds" :key="id">
+                    <td style="text-align: center; vertical-align: middle; width: 250px;">
+                      <v-text-field density="compact" v-model="charData[id].name" readonly
+                        variant="outlined" style="margin-bottom: -21px;" rounded="6"
+                        prepend-icon="mdi-delete-circle" icon-color="red"
+                        @click:prepend="delChar(id)">
+                    </v-text-field>
+                  </td>
+                  <td style="text-align: center; vertical-align: middle; width: 140px;">
+                    <select v-model="charData[id].charClass"
+                      style="appearance: auto; padding: 11px; border: 1px solid #ccc; border-radius: 6px;"
+                    >
+                      <option v-for="item in charClasses" v-bind:value="item.id">{{item.text}}</option>
+                    </select>
+                  </td>
+                  <td style="width: 130px;">
+                    <v-number-input v-model="charData[id].level"
+                      control-variant="stacked" variant="outlined" inset
+                      :max=50 :min=1 density="compact" prefix="Level"
+                      style="margin-bottom: -21px;"
+                    ></v-number-input>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </v-card>
+
+<!-- Debug stuff below -->
+          <span v-if="devMode">
+            <br>
+            <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(charData, null, 2) }}</textarea>
+          </span>
+        </v-container>
+      </v-main>
+    </v-app>
+  </div>
+
+  <script type="module" src="common.js"></script>
+  <script type="module">
+
+// Firebase config to enable remote viewing of the tracker data
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
+    authDomain: "embertracker.firebaseapp.com",
+    databaseURL: "https://embertracker-default-rtdb.firebaseio.com",
+    projectId: "embertracker",
+    storageBucket: "embertracker.firebasestorage.app",
+    messagingSenderId: "930812014694",
+    appId: "1:930812014694:web:fecf713742575e36cafda7"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+var unsubscribe = null;
+
+// Vue config and app initialization
+const { createApp } = Vue;
+// Vuetify initialization
+const { createVuetify } = Vuetify;
+//const { aliases, mdi } = Vuetify;
+const vuetify = createVuetify({ icons: { defaultSet: 'mdi' } });
+
+const App = {
+    data() {
+        return {
+            authed: false,
+            charData: {},
+            devMode: 0,
+            charClasses: [
+                { id: 'berserker',  text: 'Berserker',  icon: 'mid-plus' },
+                { id: 'brigand',    text: 'Brigand',    icon: 'mid-check-circle' },
+                { id: 'duelist',    text: 'Duelist',    icon: 'mdi-information' },
+                { id: 'knight',     text: 'Knight',     icon: 'mdi-alert' },
+                { id: 'juggernaut', text: 'Juggernaut', icon: 'mdi-alert-circle' },
+                { id: 'marshal',    text: 'Marshal',    icon: 'mdi-wifi' },
+                { id: 'sentinel',   text: 'Sentinel',   icon: 'mid-access-point' },
+                { id: 'warden',     text: 'Warden',     icon: 'mdi-shield-sword' },
+                { id: 'warlord',    text: 'Warlord',    icon: 'mdi-home' },
+            ],
+        }
+    },
+    methods: {
+        // Converts a string to Title Case for display purposes
+        toTitleCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/(^|\s)\w/g, (match) => match.toUpperCase());
+        },
+        // Converts a string to a lowercase, no-space version for consistent ID usage
+        toIdCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/\s+/g, '');
+        },
+        addChar(name, charClass='Unknown', level=50) {
+            // Add a new character to the charData based on the input field value
+            const input = document.getElementById('new_char_name');
+            if (!name) {
+                name = input.value.trim();
+                input.value = '';
+                input.focus();
+            }
+            let id = this.toIdCase(name);
+            if (name && !(id in this.charData)) {
+                // Add the new character with default values
+                this.charData[id] = {
+                    charClass: charClass,
+                    level: level,
+                    name: this.toTitleCase(name),
+                };
+                input.value = '';
+            }
+        },
+        delChar(id) {
+            if (confirm(`Are you sure you want to delete character: ${this.charData[id].name}?\nThis action cannot be undone.`)) {
+                if (id in this.charData) {
+                    delete this.charData[id];
+                } else {
+                    console.warn(`Attempted to delete non-existent character with id: ${id}`);
+                }
+            }
+        },
+        delChars() {
+            if (confirm(`Are you sure you want to delete ALL characters?\nThis action cannot be undone.`)) {
+                if (confirm('Just to be clear, ARE YOU SURE?\nYou want to enter all those names again manually?')) {
+                    this.charData = {};
+                }
+            }
+        },
+        dev() {
+            // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
+            this.addChar("Shaggy");
+            this.addChar("Velma");
+            this.addChar("Fred");
+            this.addChar("Daphne");
+            this.addChar("Scooby");
+            this.addChar("Old Man Withers");
+        },
+        devSkralg() {
+            // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
+            this.addChar("Skralg", "warden");
+        },
+        loadChars() {
+            const tPath = 'charData';
+            get(child(ref(db), tPath)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    let newData = snapshot.val();
+                    this.charData = newData;
+                } else {
+                    alert("No character data found.");
+                    this.charData = {}; // don't leave it null or GUI cries
+                }
+            }).catch((error) => {
+                console.error("Error loading character data: ", error);
+            });
+            // Subscribe to this newly loaded Tracker
+            const dataRef = ref(db, tPath);
+        },
+        saveChars() {
+            if (!this.authed) return;
+            set(ref(db, 'charData'), this.charData);
+        },
+        auth() {
+            if (!this.authed) {
+                let pass = prompt("Please enter a valid password to authenticate.");
+                if (!pass) return;
+                const auth = getAuth();
+                signInWithEmailAndPassword(auth, 'anon@ymo.us', pass).then((userCredential) => {
+                    console.log('Anonymous login approved');
+                    this.authed = true;
+                    // Load characters from the database
+                    this.loadChars();
+                }).catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error("Sign-in error: ", errorMessage);
+                });
+            }
+        }
+    },
+    computed: {
+        sortedPlayerIds() {
+            return Object.keys(this.charData).sort((a, b) => {
+                const A = this.charData[a];
+                const B = this.charData[b];
+                // Sort by checked status first, then alphabetically by name
+                if (A.checked && !B.checked) return -1;
+                if (!A.checked && B.checked) return 1;
+                return A.name.localeCompare(B.name);
+            })
+        }
+    },
+    watch: {
+        charData: {
+            handler(newData, oldData) { if (this.authed) this.saveChars(); },
+            deep: true
+        },
+    },
+    mounted() {
+        // Detect dev mode based on URL parameter and set flag accordingly
+        const urlParams = new URLSearchParams(window.location.search);
+        this.devMode = urlParams.get('dev') === '1';
+
+        // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
+        window.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.altKey && event.key === 'd') {
+                this.devMode = !this.devMode;
+            }
+        });
+
+        // Add event listener to the input field to allow adding characters by pressing Enter
+        const charInput = document.getElementById('new_char_name');
+        if (charInput) {
+            charInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') this.addChar();
+            });
+        }
+        // Focus the input field on page load for convenience
+        charInput.focus();
+        this.loadChars();
+    }
+};
+createApp(App).use(vuetify).mount('#app')
+  </script>
+</body>
+</html>
