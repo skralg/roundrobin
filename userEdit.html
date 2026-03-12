@@ -140,6 +140,10 @@ const App = {
             return str.toLowerCase().replace(/\s+/g, '');
         },
         addChar(name, charClass='Unknown', level=50) {
+            if (!this.authed) {
+                alert('You are not logged in.');
+                return;
+            }
             // Add a new character to the charData based on the input field value
             const input = document.getElementById('new_char_name');
             if (!name) {
