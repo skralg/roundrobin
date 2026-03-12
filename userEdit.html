@@ -29,7 +29,7 @@
         <v-container class="ma-5 pa-5 justify-center align-center bg-primary">
           <v-btn v-if="this.authed == false" @click="auth">Log In</v-btn>
           <v-btn v-if="this.authed == true" disabled><i>Logged In</i></v-btn>
-          <v-card>
+          <v-form :disabled="this.authed == false"><v-card>
             <v-card-title>
             <v-icon icon="mdi-trash-can-outline" @click="delChars()"></v-icon> Character List
             </v-card-title>
@@ -51,12 +51,21 @@
                         @click:prepend="delChar(id)">
                     </v-text-field>
                   </td>
-                  <td style="text-align: center; vertical-align: middle; width: 140px;">
+                  <!--td style="text-align: center; vertical-align: middle; width: 140px; border:1px solid green;">
                     <select v-model="charData[id].charClass"
                       style="appearance: auto; padding: 11px; border: 1px solid #ccc; border-radius: 6px;"
                     >
                       <option v-for="item in charClasses" v-bind:value="item.id">{{item.text}}</option>
                     </select>
+                  </td-->
+                  <td xstyle="border: 1px solid #f0f">
+                    <v-select variant="outlined" density="compact" max-width="190"
+                      v-model="charData[id].charClass" rounded="6" hide-details
+                    :items="charClasses" item-value="id" item-title="text"
+                    :prepend-icon="charIcons[this.charData[id].charClass].icon"
+                    :icon-color="charIcons[this.charData[id].charClass].color"
+                    >
+                    </v-select>
                   </td>
                   <td style="width: 130px;">
                     <v-number-input v-model="charData[id].level"
@@ -68,7 +77,7 @@
                 </tr>
               </tbody>
             </table>
-          </v-card>
+          </v-card></v-form>
 
 <!-- Debug stuff below -->
           <span v-if="devMode">
@@ -116,16 +125,28 @@ const App = {
             charData: {},
             devMode: 0,
             charClasses: [
-                { id: 'berserker',  text: 'Berserker',  icon: 'mid-plus' },
-                { id: 'brigand',    text: 'Brigand',    icon: 'mid-check-circle' },
-                { id: 'duelist',    text: 'Duelist',    icon: 'mdi-information' },
-                { id: 'knight',     text: 'Knight',     icon: 'mdi-alert' },
-                { id: 'juggernaut', text: 'Juggernaut', icon: 'mdi-alert-circle' },
-                { id: 'marshal',    text: 'Marshal',    icon: 'mdi-wifi' },
-                { id: 'sentinel',   text: 'Sentinel',   icon: 'mid-access-point' },
-                { id: 'warden',     text: 'Warden',     icon: 'mdi-shield-sword' },
-                { id: 'warlord',    text: 'Warlord',    icon: 'mdi-home' },
+                { id: 'berserker',  text: 'Berserker'  },
+                { id: 'brigand',    text: 'Brigand'    },
+                { id: 'duelist',    text: 'Duelist'    },
+                { id: 'knight',     text: 'Knight'     },
+                { id: 'juggernaut', text: 'Juggernaut' },
+                { id: 'marshal',    text: 'Marshal'    },
+                { id: 'sentinel',   text: 'Sentinel'   },
+                { id: 'warden',     text: 'Warden'     },
+                { id: 'warlord',    text: 'Warlord'    },
             ],
+            charIcons: {
+                'berserker':  {'icon': 'mdi-axe-battle', 'color': 'red'},
+                'brigand':    {'icon': 'mdi-sword-cross', 'color': 'red'},
+                'duelist':    {'icon': 'mdi-sword', 'color': 'green'},
+                'knight':     {'icon': 'mdi-shield-sword', 'color': 'blue'},
+                'juggernaut': {'icon': 'mdi-gavel', 'color': 'blue'},
+                'marshal':    {'icon': 'mdi-security', 'color': 'blue'},
+                'sentinel':   {'icon': 'mdi-chess-rook', 'color': 'green'},
+                'warden':     {'icon': 'mdi-ladybug', 'color': 'red'},
+                'warlord':    {'icon': 'mdi-music', 'color': 'green'},
+                "Unknown":    {'icon': 'mdi-help-box', 'color': 'black'}
+            },
         }
     },
     methods: {
