@@ -51,14 +51,7 @@
                         @click:prepend="delChar(id)">
                     </v-text-field>
                   </td>
-                  <!--td style="text-align: center; vertical-align: middle; width: 140px; border:1px solid green;">
-                    <select v-model="charData[id].charClass"
-                      style="appearance: auto; padding: 11px; border: 1px solid #ccc; border-radius: 6px;"
-                    >
-                      <option v-for="item in charClasses" v-bind:value="item.id">{{item.text}}</option>
-                    </select>
-                  </td-->
-                  <td xstyle="border: 1px solid #f0f">
+                  <td>
                     <v-select variant="outlined" density="compact" max-width="190"
                       v-model="charData[id].charClass" rounded="6" hide-details
                     :items="charClasses" item-value="id" item-title="text"
