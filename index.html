@@ -348,6 +348,10 @@ const App = {
         saveTracker() {
             if (!this.authed) return;
             const trackerId = document.getElementById('external_tracker_id').value;
+            if (!trackerId) {
+                alert("You must enter a Tracker ID before saving!");
+                return;
+            }
             set(ref(db, 'lootData/' + trackerId), this.lootData);
         },
         authTracker() {
