@@ -20,6 +20,7 @@ body { background-color: #888888;}
     padding-left: 10px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px;
     font-weight: bold; font-family: Monospace; border-collapse: collapse;
 }
+.tracker tr:nth-child(4) td { background-color: #8888a8; border: 1px solid black;}
 
 .delchar {
     color: red; background-color: black; font-weight: bold; font-family: monospace;

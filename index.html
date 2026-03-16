@@ -20,7 +20,7 @@
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
-        <tr><th colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
+        <tr><th v-if="!tracker.lastWinner" colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
