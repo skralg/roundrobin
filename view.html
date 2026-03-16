@@ -6,6 +6,7 @@
     <link rel="icon" type="image/png" href="Ember-16.png"/>
     <title>Embers Adrift Round-Robin Loot Tracker</title>
     <link href="vuetify.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     <style>
         .tracker { display: inline; margin: 5px; }
         .tracker thead th { padding: 5px; }
@@ -76,7 +77,10 @@ const { createVuetify, useTheme, md1, md2, md3 } = Vuetify;
 import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-
+const mdi = {
+    // Not using mergeProps here, functional components merge props by default (?)
+    component: props => h(VClassIcon, { ...props, class: 'mdi' })
+};
 // Initialize Vuetify with Material 3 defaults
 const vuetify = createVuetify({
     defaults: {
@@ -105,6 +109,7 @@ const vuetify = createVuetify({
         VTextField:    { variant: 'outlined' },
         VToolbar:      { VBtn: { color: null } }
     },
+    icons: { defaultSet: 'mdi', sets: { mdi } },
     theme: {
         themes: {
             light: {
