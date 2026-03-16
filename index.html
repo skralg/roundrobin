@@ -371,6 +371,14 @@ const App = {
     },
     computed: {
         sortedPlayerIds() {
+            if (!this.lootData) {
+                console.log('no lootdata for sort');
+                return [];
+            }
+            if (!this.lootData.players) {
+                console.log('no player lootdata for sort');
+                return [];
+            }
             return Object.keys(this.lootData.players).sort((a, b) => {
                 const A = this.lootData.players[a];
                 const B = this.lootData.players[b];
