@@ -44,7 +44,7 @@
                         </th>
                     </tr>
                     <tr>
-                        <th colspan="2" class="suggest">{{ suggest(trackerId) }}</th>
+                        <th colspan="2" class="suggest" v-if="tracker.method != 'gear'">{{ suggest(trackerId) }}</th>
                     </tr>
                     <tr>
                         <th colspan="2" class="bg-primary on-tertiary">
@@ -52,13 +52,18 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody v-if="lootData.trackers[trackerId].method != 'gear'">
                     <tr v-for="playerId in sortedTracker(trackerId)" :key="playerId">
                         <td :class="{ 'disabled' : !lootData.players[playerId].trackers[trackerId].checked}">{{ lootData.players[playerId].name }}</td>
                         <td>
                             <span class="viewcount" v-html="lootData.players[playerId].trackers[trackerId].count"></span>
                             <span class="fairness" v-if="tracker.method === 'fair'">&nbsp;[{{ lootData.players[playerId].trackers[trackerId].fairness }}]</span>
                         </td>
+                    </tr>
+                </tbody>
+                <tbody v-if="lootData.trackers[trackerId].method == 'gear'">
+                    <tr v-for="line in lootData.trackers[trackerId].log" :key="line">
+                        <td>{{ line }}</td>
                     </tr>
                 </tbody>
             </table>
