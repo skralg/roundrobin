@@ -20,9 +20,9 @@
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
-        <tr><th v-if="!tracker.lastWinner" colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
+        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
-        <tr v-for="id in sortedTracker(trackerId)" :key="id">
+        <tr v-if="tracker.method != 'gear'" v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
             <td>
                 <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
@@ -32,6 +32,39 @@
                 </button>
                 <input type="checkbox" v-model="lootData.players[id].trackers[trackerId].checked"/>
             </td>
+        </tr>
+        <tr v-if="tracker.method == 'gear'">
+          <td>
+            <input type="radio" name="region" id="lower" value="lower"/>
+            <label for="lower">Lower</label>
+            &nbsp;
+            <input type="radio" name="region" id="central" value="central" checked/>
+            <label for="central">Central</label>
+            <br>
+            <select id="artifactPrefix">
+              <option v-for="prefix in prefixOptions()" :key="prefix" :value="prefix">
+                {{ prefix }}
+              </option>
+            </select>
+            <i>&nbsp;Ibaxian Artifact&nbsp;</i>
+            <select id="artifactSuffix">
+              <option v-for="suffix in suffixOptions()" :key="suffix" :value="suffix">
+                {{ suffix }}
+              </option>
+            </select>
+            <br>
+            Won by: <select id="artifactUser">
+              <option v-for="id in sortedPlayerIds" :key="id" :value="id">{{ lootData.players[id].name }}</option>
+            </select>
+            <button @click="addArtifact(trackerId)"> Add</button>
+          </td>
+        </tr>
+        <tr v-if="tracker.method == 'gear'">
+          <td style="text-align: left;">
+            <template v-for="line in trackerLog(trackerId)" :key="line">
+            {{ line }}<br>
+            </template>
+          </td>
         </tr>
     </table>
 </div>
@@ -56,6 +89,7 @@
         <button @click="addTracker('Lower Runes');">Track Ibaxus Runes: Lower </button><br>
         <br>
         <button @click="addTracker('Volatile Ember Flux');">Track Volatile Ember Flux</button><br>
+        <button @click="addTracker('Artifacts', 1, 'gear');">Track Ibaxian Artifacts</button><br>
         <br>
         <button @click="addTracker('');">Track Custom Singles</button><br>
         <button @click="addTracker('',[1,2,3,4,5]);">Track Custom Multiples</button>
@@ -219,7 +253,8 @@ const App = {
                     lastWinner: false,
                     players: checkedPlayers,
                     method: method,
-                    undo: false
+                    undo: false,
+                    log: [],
                 };
             }
         },
@@ -240,6 +275,8 @@ const App = {
                 tracker.createdAt = new Date().getTime();
                 tracker.totalDrops = 0;
                 tracker.lastWinner = false;
+                tracker.undo = false;
+                tracker.log = [];
                 // Reset each player's count for this tracker
                 tracker.players.forEach(playerId => {
                     if (this.lootData.players[playerId].trackers[trackerId]) {
@@ -322,6 +359,7 @@ const App = {
             this.addChar("Old Man Withers");
             this.addTracker("Central Shards", [2,5], 'fair');
             this.addTracker("Central Runes", [1]);
+            this.addTracker("Artifacts", [1], 'gear');
         },
         loadTracker(trackerId=null) {
             if (!trackerId) {
@@ -378,7 +416,55 @@ const App = {
         },
         shareLink() {
             return "view.html?track=debug";
-        }
+        },
+        addArtifact(trackerId) {
+          const tracker = this.lootData.trackers[trackerId];
+          const prefix = document.getElementById('artifactPrefix').value;
+          const suffix = document.getElementById('artifactSuffix').value;
+          const playerId = document.getElementById('artifactUser').value;
+          const message = prefix + " Ibaxian Artifact " + suffix + " - " + this.lootData.players[playerId].name;
+          if (!tracker.log) {
+            tracker.log = [message]
+          } else {
+            tracker.log.push(message);
+          }
+          tracker.totalDrops += 1;
+        },
+        prefixOptions() {
+          const buttons = document.querySelector('input[name="region"]:checked');
+          var region = 'central';
+          if (buttons) {
+            region = buttons.value;
+          }
+          
+          console.log('region is ' + region);
+          if (region == 'central') {
+            return [
+              'Champion', 'Conqueror', 'Savior',
+              'Imposing', 'Cruel', 'Merciless', 'Forceful', 'Heroic', 'Warforged', 'Eternal', 'Wrathful', 'Loathing'
+            ];
+          }
+          return [
+            'Guardian', 'Slayer', 'Mender',
+            'Mighty', 'Bloodied', 'Savage', 'Relentless', 'Valiant', 'Embattled', 'Towering', 'Vicious', 'Dreaded'
+          ];
+        },
+        suffixOptions() {
+          const artifactPrefix = document.getElementById('artifactPrefix');
+          var prefix = 'Champion';
+          if (artifactPrefix) {
+            prefix = artifactPrefix.value;
+          }
+          const inners = ['Champion', 'Conqueror', 'Savior', 'Guardian', 'Slayer', 'Mender'];
+          if (inners.includes(prefix)) {
+            return ['Earring', 'Necklace', 'Shirt', 'Gloves', 'Ring', 'Belt', 'Pants', 'Boots'];
+          } else {
+            return ['Helm', 'Pauldron', 'Cuirass', 'Vambrace', 'Faulds', 'Greaves'];
+          }
+        },
+        trackerLog(trackerId) {
+          return this.lootData.trackers[trackerId].log;
+        },
     },
     computed: {
         sortedPlayerIds() {
