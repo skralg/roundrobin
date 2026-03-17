@@ -260,7 +260,8 @@ const App = {
             tracker.undo = { // TODO: Maybe store fairness values too?
                 player: playerId,
                 count: lootCount,
-                lastWinner: tracker.lastWinner
+                lastWinner: tracker.lastWinner,
+                minFairness: 0,
             };
             // Ensure count is treated as a number in case it was edited manually which stringifies it.
             player.count = parseInt(player.count) + lootCount;
@@ -284,6 +285,7 @@ const App = {
             //  If the lowest value isn't 0, subtract that number from all fairness values so we can add new players fairly.
             //  Even reduce the unchecked players, but make sure they don't go below 0.
             const minFairness = fairnessValues[0];
+            tracker.undo.minFairness = minFairness;
             if (minFairness > 0) {
                 tracker.players.forEach(id => {
                     this.lootData.players[id].trackers[trackerId].fairness =
@@ -297,10 +299,15 @@ const App = {
             const playerId = tracker.undo.player;
             const lootCount = tracker.undo.count;
             const lastWinner = tracker.undo.lastWinner;
+            const minFairness = tracker.undo.minFairness;
             const playerTrackerData = this.lootData.players[playerId].trackers[trackerId];
             if (!playerTrackerData) return;
             playerTrackerData.count -= lootCount;
             playerTrackerData.fairness -= lootCount;
+            // Raise the fairness back up
+            tracker.players.forEach(id => {
+                this.lootData.players[id].trackers[trackerId].fairness += minFairness;
+            });
             tracker.totalDrops -= lootCount;
             tracker.lastWinner = lastWinner;
             tracker.undo = false;
