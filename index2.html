@@ -20,16 +20,42 @@
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
-        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
+        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest">S: {{ suggest(trackerId) }}</th></tr>
+        <tr>
+            <th class="suggest" colspan="2">
+                Register Drop:
+                <button v-for="lootCount in tracker.lootCounts" :key="lootCount" style="margin-left: 5px; margin-right: 5px"
+                  @click="registerDrop(trackerId, lootCount)">
+                    +{{ lootCount }}
+                </button>
+            </th>
+        </tr>
+        <tr>
+            <th v-if="tracker.pending && tracker.pending.length" class="award" colspan="2">
+                <template v-for="(pending, index) in tracker.pending" :key="pending">
+                    {{ pending[0] }} to
+                    <select :id="trackerId + '_' + index">
+                        <option value="cancel">-- Cancel --</option>
+                        <template v-for="id in sortedPlayerIds" :key="id">
+                            <option v-if="id == tracker.players[0]" :value="id" selected>{{ this.lootData.players[id].name }}</option>
+                            <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
+                        </template>
+                    </select>
+                    <button @click="confirmAward(trackerId, index)" >Confirm
+                    </button>
+                    <br>
+                </template>
+            </th>
+        </tr>
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-if="tracker.method != 'gear'" v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
             <td>
                 <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
                 <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
-                <button style="margin-left: 5px; margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
+                <!--<button style="margin-left: 5px; margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
                     +{{ lootCount }}
-                </button>
+                </button>-->
                 <input type="checkbox" v-model="lootData.players[id].trackers[trackerId].checked"/>
             </td>
         </tr>
@@ -254,9 +280,19 @@ const App = {
                     players: checkedPlayers,
                     method: method,
                     undo: false,
+                    actions: [],
+                    pending: [],
                     log: [],
                 };
             }
+        },
+        addAction(trackerId, target, msg, tag) {
+            const tracker = this.lootData.trackers[trackerId];
+            if (!tracker.actions) tracker.actions = [];
+            const actions = tracker.actions;
+            // Nuke default action if the tracker has lastwinner
+            if (tracker.lastWinner && actions.length && actions[0].tag == 'default') actions.shift();
+            actions.push({ target: target, msg: msg, tag: tag });
         },
         delTracker(tracker_id) {
             // Remove the specified tracker from lootData and from each player's tracker data
@@ -276,6 +312,8 @@ const App = {
                 tracker.totalDrops = 0;
                 tracker.lastWinner = false;
                 tracker.undo = false;
+                tracker.actions = [];
+                tracker.pending = [];
                 tracker.log = [];
                 // Reset each player's count for this tracker
                 tracker.players.forEach(playerId => {
@@ -286,7 +324,38 @@ const App = {
                 });
             }
         },
+        registerDrop(trackerId, lootCount, playerId=null) {
+            const tracker = this.lootData.trackers[trackerId];
+            if (!playerId) playerId = tracker.players[0];
+            const player = this.lootData.players[playerId];
+            console.log(`trackerId(${trackerId}) lootCount(${lootCount}) playerId(${playerId})`);
+            if (!tracker.pending) {
+                tracker.pending = [[lootCount, playerId]];
+            } else {
+                tracker.pending.push([lootCount, playerId]);
+            }
+            // Add an action for the viewer app
+            let name = player.name;
+            let target = playerId;
+            let msg = `+${lootCount} for ${name}`;
+            if (!tracker.lastWinner) {
+                name = '*NEED*';
+                target = 'everyone';
+                msg = `${lootCount} stack, everyone NEED`;
+            }
+            this.addAction(trackerId, target, msg, 'loot');
+        },
+        confirmAward(trackerId, index) {
+            const tracker = this.lootData.trackers[trackerId];
+            const lootCount = tracker.pending[0][0];
+            const playerId = document.getElementById(trackerId + '_' + index).value;
+            console.log(`trackerId(${trackerId}) index(${index}) lootCount(${lootCount}) playerId(${playerId})`);
+            if (playerId != 'cancel') this.addLoot(trackerId, playerId, lootCount);
+            tracker.pending.splice(index, 1);
+            tracker.actions.splice(index, 1);
+        },
         addLoot(trackerId, playerId, lootCount) {
+            console.log(`trackerId(${trackerId}) playerId(${playerId}) lootCount(${lootCount})`);
             const tracker = this.lootData.trackers[trackerId];
             if (!tracker) return;
             // Get a handle on the player that looted
@@ -294,7 +363,7 @@ const App = {
             if (!player) return; // shouldn't happen
             // Store undo data in the tracker so we can reverse this action if needed
             //   I know I've clicked the wrong button before.
-            tracker.undo = { // TODO: Maybe store fairness values too?
+            tracker.undo = {
                 player: playerId,
                 count: lootCount,
                 lastWinner: tracker.lastWinner,
@@ -358,8 +427,8 @@ const App = {
             this.addChar("Scooby");
             this.addChar("Old Man Withers");
             this.addTracker("Central Shards", [2,5], 'fair');
-            this.addTracker("Central Runes", [1]);
-            this.addTracker("Artifacts", [1], 'gear');
+            //this.addTracker("Central Runes", [1]);
+            //this.addTracker("Artifacts", [1], 'gear');
         },
         loadTracker(trackerId=null) {
             if (!trackerId) {
@@ -437,7 +506,6 @@ const App = {
             region = buttons.value;
           }
           
-          console.log('region is ' + region);
           if (region == 'central') {
             return [
               'Champion', 'Conqueror', 'Savior',
