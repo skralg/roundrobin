@@ -20,7 +20,7 @@
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
-        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest">S: {{ suggest(trackerId) }}</th></tr>
+        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest">{{ suggest(trackerId) }}</th></tr>
         <tr>
             <th class="suggest" colspan="2">
                 Register Drop:
