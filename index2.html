@@ -279,7 +279,7 @@ const App = {
                     lastWinner: false,
                     players: checkedPlayers,
                     method: method,
-                    undo: false,
+                    undo: {},
                     actions: [],
                     pending: [],
                     log: [],
@@ -311,7 +311,7 @@ const App = {
                 tracker.createdAt = new Date().getTime();
                 tracker.totalDrops = 0;
                 tracker.lastWinner = false;
-                tracker.undo = false;
+                tracker.undo = {};
                 tracker.actions = [];
                 tracker.pending = [];
                 tracker.log = [];
@@ -367,6 +367,7 @@ const App = {
                 player: playerId,
                 count: lootCount,
                 lastWinner: tracker.lastWinner,
+                actions: tracker.actions,
                 minFairness: 0,
             };
             // Ensure count is treated as a number in case it was edited manually which stringifies it.
@@ -405,6 +406,7 @@ const App = {
             const playerId = tracker.undo.player;
             const lootCount = tracker.undo.count;
             const lastWinner = tracker.undo.lastWinner;
+            const actions = tracker.undo.actions;
             const minFairness = tracker.undo.minFairness;
             const playerTrackerData = this.lootData.players[playerId].trackers[trackerId];
             if (!playerTrackerData) return;
@@ -416,7 +418,8 @@ const App = {
             });
             tracker.totalDrops -= lootCount;
             tracker.lastWinner = lastWinner;
-            tracker.undo = false;
+            tracker.actions = actions;
+            tracker.undo = {};
         },
         dev() {
             // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
