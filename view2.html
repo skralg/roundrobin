@@ -160,6 +160,7 @@ const App = {
             alerts: 'none',
             speech: null,
             voice: null,
+            lastAction: {},
             devMode: 0
         }
     },
@@ -244,7 +245,7 @@ const App = {
             if (!(this.alerts == 'everyone' || action.target == 'everyone' || this.alerts == action.target)) return;
 
             // Bail if we already did this one
-            if (action == this.lastAction) return;
+            if (action == this.lastAction[trackerId]) return;
 
             const trackerName = this.lootData.trackers[trackerId].name;
             const sentence = `${trackerName}. ${action.msg}`;
@@ -252,7 +253,7 @@ const App = {
             utterance.voice = this.voice;
             utterance.volume = .5;
             this.speech.speak(utterance);
-            this.lastAction = action;
+            this.lastAction[trackerId] = action;
         },
         configSpeech() {
             const voices = this.speech.getVoices();
