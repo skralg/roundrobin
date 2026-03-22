@@ -267,11 +267,28 @@ const App = {
                 }
             }
         },
+        localSave(key, val) {
+            try {
+                localStorage.setItem(key, val);
+            } catch (error) {
+                console.error('Error saving to localStorage: ' , error);
+            }
+        },
+        localLoad() {
+            const localKeys = ['alerts'];
+            // Load these keys from localStorage
+            for (const key of localKeys) {
+                const val = localStorage.getItem(key); // null if not found
+                this[key] = val;
+            }
+        },
     },
     mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly
         const urlParams = new URLSearchParams(window.location.search);
         this.devMode = urlParams.get('dev') === '1';
+
+        // Get supplied Tracker ID and configure the input field for it
         const trackerInput = document.getElementById('external_tracker_id');
         const trackerId = urlParams.get('track');
         if (trackerId) {
@@ -280,30 +297,30 @@ const App = {
         } else {
             trackerInput.focus();
         }
+        // add event listener to load an id when you hit enter
+        trackerInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') this.loadTracker();
+        });
 
         // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
         window.addEventListener('keydown', (event) => {
-            if (event.ctrlKey && event.altKey && event.key === 'd') {
-                this.devMode = !this.devMode;
-            }
+            if (event.ctrlKey && event.altKey && event.key === 'd') this.devMode = !this.devMode;
         });
 
-        // Add event listener to the input field to load a tracker by pressing Enter
-        const charInput = document.getElementById('external_tracker_id');
-        if (charInput) {
-            charInput.addEventListener('keypress', (event) => {
-                if (event.key === 'Enter') this.loadTracker();
-            });
-        }
-
         // Update reactive currentTime every second so any computed/display methods refresh
-        setInterval(() => {
-            this.currentTime = new Date().getTime();
-        }, 1000);
+        setInterval(() => { this.currentTime = new Date().getTime(); }, 1000);
 
+        // cache the speech synthesizer
         this.speech = window.speechSynthesis;
-        
-    }
+
+        // Load locally stored stuff
+        this.localLoad();
+    },
+    watch: {
+        alerts: {
+            handler(newData, oldData) { this.localSave('alerts', newData); },
+        },
+    },
 };
 createApp(App).use(vuetify).mount('#app');
 </script>
