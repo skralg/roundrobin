@@ -37,7 +37,7 @@
                     <select :id="trackerId + '_' + index">
                         <option value="cancel">-- Cancel --</option>
                         <template v-for="id in sortedPlayerIds" :key="id">
-                            <option v-if="id == tracker.players[0]" :value="id" selected>{{ this.lootData.players[id].name }}</option>
+                            <option v-if="id == tracker.players[index]" :value="id" selected>{{ this.lootData.players[id].name }}</option>
                             <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
                         </template>
                     </select>
