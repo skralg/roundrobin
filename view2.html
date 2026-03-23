@@ -158,9 +158,9 @@ const App = {
             currentTime: new Date().getTime(),
             trackerId: null,
             alerts: 'none',
+            alertsRead: [],
             speech: null,
             voice: null,
-            lastAction: {},
             devMode: 0
         }
     },
@@ -239,21 +239,25 @@ const App = {
             // no actions so far
             if (!tracker.actions || !tracker.actions.length) return;
 
-            const action = tracker.actions[0];
-
-            // Bail if this is not for an alert we want
-            if (!(this.alerts == 'everyone' || action.target == 'everyone' || this.alerts == action.target)) return;
-
-            // Bail if we already did this one
-            if (action == this.lastAction[trackerId]) return;
-
             const trackerName = this.lootData.trackers[trackerId].name;
-            const sentence = `${trackerName}. ${action.msg}`;
-            const utterance = new SpeechSynthesisUtterance(sentence);
-            utterance.voice = this.voice;
-            utterance.volume = .5;
-            this.speech.speak(utterance);
-            this.lastAction[trackerId] = action;
+            for (const index in tracker.actions) {
+                let action = tracker.actions[index];
+                // Bail if this is not for an alert we want
+                if (!(this.alerts == 'everyone' || action.target == 'everyone' || this.alerts == action.target)) continue;
+
+                // Bail if we already did this one
+                if (this.alertsRead.includes(action.id)) {
+                    //console.log(`already read ${action.id}`);
+                    continue;
+                }
+
+                const sentence = `${trackerName} ${action.msg}`;
+                const utterance = new SpeechSynthesisUtterance(sentence);
+                utterance.voice = this.voice;
+                utterance.volume = .5;
+                this.speech.speak(utterance);
+                this.alertsRead.push(action.id);
+            }
         },
         configSpeech() {
             const voices = this.speech.getVoices();
@@ -317,7 +321,7 @@ const App = {
         this.localLoad();
     },
     watch: {
-        alerts: {
+        alerts: { // save your verbal alert level when you change it
             handler(newData, oldData) { this.localSave('alerts', newData); },
         },
     },

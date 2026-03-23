@@ -286,14 +286,6 @@ const App = {
                 };
             }
         },
-        addAction(trackerId, target, msg, tag) {
-            const tracker = this.lootData.trackers[trackerId];
-            if (!tracker.actions) tracker.actions = [];
-            const actions = tracker.actions;
-            // Nuke default action if the tracker has lastwinner
-            if (tracker.lastWinner && actions.length && actions[0].tag == 'default') actions.shift();
-            actions.push({ target: target, msg: msg, tag: tag });
-        },
         delTracker(tracker_id) {
             // Remove the specified tracker from lootData and from each player's tracker data
             if (confirm(`Are you sure you want to delete ${this.lootData.trackers[tracker_id].name}?\nThis action cannot be undone.`)) {
@@ -327,10 +319,9 @@ const App = {
         registerDrop(trackerId, lootCount, playerId=null) {
             const tracker = this.lootData.trackers[trackerId];
             // Determine who is next up by count of already registered drops
-            const index = tracker.pending.length;
+            const index = tracker.pending ? tracker.pending.length : 0;
             if (!playerId) playerId = tracker.players[index];
             const player = this.lootData.players[playerId];
-            console.log(`trackerId(${trackerId}) lootCount(${lootCount}) playerId(${playerId})`);
             if (!tracker.pending) {
                 tracker.pending = [[lootCount, playerId]];
             } else {
@@ -340,24 +331,36 @@ const App = {
             let name = player.name;
             let target = playerId;
             let msg = `+${lootCount} for ${name}`;
+            if (tracker.lootCounts.length == 1) {
+                msg = `Drop for ${name}`;
+            }
             if (!tracker.lastWinner) {
                 name = '*NEED*';
                 target = 'everyone';
-                msg = `${lootCount} stack, everyone NEED`;
+                if (tracker.lootCounts.length == 1) {
+                    msg = `Drop, everyone NEED`;
+                } else {
+                    msg = `${lootCount} stack, everyone NEED`;
+                }
             }
-            this.addAction(trackerId, target, msg, 'loot');
+            this.addAction(trackerId, target, msg);
+        },
+        addAction(trackerId, target, msg) {
+            const tracker = this.lootData.trackers[trackerId];
+            if (!tracker.actions) tracker.actions = [];
+            const actions = tracker.actions;
+            // Nuke default action if the tracker has lastwinner
+            actions.push({ target: target, msg: msg, id: Date.now() });
         },
         confirmAward(trackerId, index) {
             const tracker = this.lootData.trackers[trackerId];
-            const lootCount = tracker.pending[0][0];
-            const playerId = document.getElementById(trackerId + '_' + index).value;
-            console.log(`trackerId(${trackerId}) index(${index}) lootCount(${lootCount}) playerId(${playerId})`);
+            const lootCount = tracker.pending[index][0];
+            const playerId = document.getElementById(trackerId + '_' + index).value; // from dropdown menu in case it differs
             if (playerId != 'cancel') this.addLoot(trackerId, playerId, lootCount);
             tracker.pending.splice(index, 1);
             tracker.actions.splice(index, 1);
         },
         addLoot(trackerId, playerId, lootCount) {
-            console.log(`trackerId(${trackerId}) playerId(${playerId}) lootCount(${lootCount})`);
             const tracker = this.lootData.trackers[trackerId];
             if (!tracker) return;
             // Get a handle on the player that looted
