@@ -38,9 +38,19 @@
                 </select>
                 <v-btn @click="showVoicePicker = true" variant="tonal" rounded="sm" density="compact" :elevation="1" icon="mdi-account-voice" title="Configure voice"></v-btn>
                 &nbsp;
-                <!--<v-btn @click="navigateToOldURL" variant="tonal" :elevation="1">Old Version</v-btn>
-                &nbsp; &nbsp;-->
-                <v-btn @click="theme.cycle()" text="Change Theme" variant="tonal" rounded="xl" :elevation="1"></v-btn>
+                <select v-model="selectedTheme" @change="setTheme(selectedTheme)">
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                    <option value="ocean">Ocean</option>
+                    <option value="sunset">Sunset</option>
+                    <option value="forest">Forest</option>
+                    <option value="ice">Ice</option>
+                    <option value="volcano">Volcano</option>
+                    <option value="night">Night</option>
+                    <option value="matrix">Matrix</option>
+                    <option value="deepsea">Deep Sea</option>
+                </select>
+                &nbsp;
             </v-toolbar>
             
             <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
@@ -150,9 +160,57 @@ const vuetify = createVuetify({
     },
     icons: { defaultSet: 'mdi' },
     theme: {
+        defaultTheme: 'light',
         themes: {
             light: {
-                colors: { primary: '#6750a4', secondary: '#b4b0bb', tertiary: '#7d5260', error: '#b3261e', surface: '#fffbfe' }
+                colors: {
+                    primary: '#6750a4', secondary: '#b4b0bb', tertiary: '#7d5260', error: '#b3261e', surface: '#fffbfe', background: '#ffffff'
+                }
+            },
+            dark: {
+                colors: {
+                    primary: '#bb86fc', secondary: '#03dac6', tertiary: '#3700b3', error: '#cf6679', surface: '#121212', background: '#121212'
+                }
+            },
+            ocean: {
+                colors: {
+                    primary: '#0277bd', secondary: '#26c6da', tertiary: '#01579b', error: '#d32f2f', surface: '#e1f5fe', background: '#e0f7fa'
+                }
+            },
+            sunset: {
+                colors: {
+                    primary: '#d84315', secondary: '#ff8a65', tertiary: '#6d4c41', error: '#c62828', surface: '#fff3e0', background: '#fff8e1'
+                }
+            },
+            forest: {
+                colors: {
+                    primary: '#2e7d32', secondary: '#81c784', tertiary: '#1b5e20', error: '#c62828', surface: '#e8f5e9', background: '#e8f5e9'
+                }
+            },
+            ice: {
+                colors: {
+                    primary: '#039be5', secondary: '#b3e5fc', tertiary: '#01579b', error: '#d32f2f', surface: '#e1f5fe', background: '#e7f4ff'
+                }
+            },
+            volcano: {
+                colors: {
+                    primary: '#c62828', secondary: '#ff7043', tertiary: '#4e342e', error: '#ab000d', surface: '#fbe9e7', background: '#ffebee'
+                }
+            },
+            night: {
+                colors: {
+                    primary: '#1a237e', secondary: '#283593', tertiary: '#0d47a1', error: '#e53935', surface: '#121330', background: '#0b0c29'
+                }
+            },
+            matrix: {
+                colors: {
+                    primary: '#0f9d58', secondary: '#1b5e20', tertiary: '#2e7d32', error: '#c62828', surface: '#0f1f1d', background: '#07180f'
+                }
+            },
+            deepsea: {
+                colors: {
+                    primary: '#004d40', secondary: '#00796b', tertiary: '#00695c', error: '#c62828', surface: '#00251a', background: '#001f16'
+                }
             }
         }
     }
@@ -186,6 +244,7 @@ const App = {
             voice: null,
             voices: [],
             selectedVoiceURI: null,
+            selectedTheme: 'light',
             showVoicePicker: false,
             voiceTestSentences: [
                 'Can I pet that dog?',
@@ -376,6 +435,12 @@ const App = {
                 console.error('Error saving to localStorage: ' , error);
             }
         },
+        setTheme(themeName) {
+            if (!themeName || !this.theme) return;
+            this.selectedTheme = themeName;
+            this.theme.change(themeName);
+            localStorage.setItem('themePreference', themeName);
+        },
         localLoad() {
             const localKeys = ['alerts'];
             // Load these keys from localStorage
@@ -387,6 +452,11 @@ const App = {
             const savedVoice = localStorage.getItem('speechVoiceURI');
             if (savedVoice) {
                 this.selectedVoiceURI = savedVoice;
+            }
+            // Retain theme choice
+            const savedTheme = localStorage.getItem('themePreference');
+            if (savedTheme) {
+                this.selectedTheme = savedTheme;
             }
         },
     },
@@ -426,6 +496,8 @@ const App = {
 
         // Load locally stored stuff
         this.localLoad();
+        const themeToApply = this.selectedTheme || 'light';
+        this.setTheme(themeToApply);
     },
     watch: {
         alerts: { // save your verbal alert level when you change it
