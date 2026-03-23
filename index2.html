@@ -326,7 +326,9 @@ const App = {
         },
         registerDrop(trackerId, lootCount, playerId=null) {
             const tracker = this.lootData.trackers[trackerId];
-            if (!playerId) playerId = tracker.players[0];
+            // Determine who is next up by count of already registered drops
+            const index = tracker.pending.length;
+            if (!playerId) playerId = tracker.players[index];
             const player = this.lootData.players[playerId];
             console.log(`trackerId(${trackerId}) lootCount(${lootCount}) playerId(${playerId})`);
             if (!tracker.pending) {
