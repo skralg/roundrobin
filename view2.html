@@ -36,6 +36,7 @@
                     <option value="everyone">Everyone</option>
                     <option v-for="(item, id) in this.lootData.players" :key="id" :value="id">{{ item.name }}</option>
                 </select>
+                <v-btn @click="showVoicePicker = true" variant="tonal" rounded="sm" density="compact" :elevation="1" icon="mdi-account-voice" title="Configure voice"></v-btn>
                 &nbsp;
                 <!--<v-btn @click="navigateToOldURL" variant="tonal" :elevation="1">Old Version</v-btn>
                 &nbsp; &nbsp;-->
@@ -78,6 +79,31 @@
                 </tbody>
             </table>
             <!--<textarea style="float:right;font-size: 10px;" rows="30" cols="50">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>-->
+
+            <v-dialog v-model="showVoicePicker" max-width="480">
+                <v-card>
+                    <v-card-title>Select speech voice</v-card-title>
+                    <v-card-text>
+                        <v-select
+                            v-model="selectedVoiceURI"
+                            :items="voices"
+                            item-title="label"
+                            item-value="uri"
+                            label="Available voices"
+                            dense
+                            outlined
+                        />
+                        <p v-if="voices.length === 0" class="text-caption">No voices loaded yet. Ensure speechSynthesis is available and try again.</p>
+                    </v-card-text>
+                    <v-card-actions>
+                        <v-spacer />
+                        <v-btn text color="primary" @click="testVoice()" :disabled="!selectedVoiceURI">Test</v-btn>
+                        <v-btn text color="primary" @click="showVoicePicker = false">Cancel</v-btn>
+                        <v-btn text color="primary" @click="applySelectedVoice()">Apply</v-btn>
+                    </v-card-actions>
+                </v-card>
+            </v-dialog>
+
         </v-main>
     </v-app>
 </div>
@@ -93,10 +119,7 @@ const { createVuetify, useTheme, md1, md2, md3 } = Vuetify;
 import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
-const mdi = {
-    // Not using mergeProps here, functional components merge props by default (?)
-    component: props => h(VClassIcon, { ...props, class: 'mdi' })
-};
+
 // Initialize Vuetify with Material 3 defaults
 const vuetify = createVuetify({
     defaults: {
@@ -125,7 +148,7 @@ const vuetify = createVuetify({
         VTextField:    { variant: 'outlined' },
         VToolbar:      { VBtn: { color: null } }
     },
-    icons: { defaultSet: 'mdi', sets: { mdi } },
+    icons: { defaultSet: 'mdi' },
     theme: {
         themes: {
             light: {
@@ -161,6 +184,20 @@ const App = {
             alertsRead: [],
             speech: null,
             voice: null,
+            voices: [],
+            selectedVoiceURI: null,
+            showVoicePicker: false,
+            voiceTestSentences: [
+                'Can I pet that dog?',
+                'Rune of Celerity for Roscoe. Grats Roscoe!',
+                '5-stack for Raxtin',
+                "It's about the journey, not the destination.",
+                'Hey, do you guys want to do sentries?',
+                "I'm sorry, I can't do that Dave.",
+                "Would you like to play a game?",
+                "Can I get a heal? Even a roach heal?",
+                "Wait, who are those shards for?"
+            ],
             devMode: 0
         }
     },
@@ -246,10 +283,7 @@ const App = {
                 if (!(this.alerts == 'everyone' || action.target == 'everyone' || this.alerts == action.target)) continue;
 
                 // Bail if we already did this one
-                if (this.alertsRead.includes(action.id)) {
-                    //console.log(`already read ${action.id}`);
-                    continue;
-                }
+                if (this.alertsRead.includes(action.id)) continue;
 
                 const sentence = `${trackerName} ${action.msg}`;
                 const utterance = new SpeechSynthesisUtterance(sentence);
@@ -259,17 +293,81 @@ const App = {
                 this.alertsRead.push(action.id);
             }
         },
-        configSpeech() {
+        enumerateVoices() {
+            if (!this.speech) return;
             const voices = this.speech.getVoices();
+            this.voices = voices.map(v => ({
+                name: v.name,
+                lang: v.lang,
+                uri: v.voiceURI,
+                label: `${v.name} (${v.lang})${v.default ? ' [default]' : ''}`
+            }));
+
+            const savedURI = localStorage.getItem('speechVoiceURI');
+            if (savedURI) {
+                const match = voices.find(v => v.voiceURI === savedURI);
+                if (match) {
+                    this.voice = match;
+                    this.selectedVoiceURI = savedURI;
+                }
+            }
+
+            if (!this.voice) {
+                this.configSpeech();
+            }
+        },
+        applySelectedVoice() {
+            if (!this.selectedVoiceURI) return;
+            const chosen = this.speech.getVoices().find(v => v.voiceURI === this.selectedVoiceURI);
+            if (chosen) {
+                this.voice = chosen;
+                localStorage.setItem('speechVoiceURI', chosen.voiceURI);
+            }
+            this.showVoicePicker = false;
+        },
+        testVoice() {
+            if (!('speechSynthesis' in window) || !this.speech) return;
+            if (!this.selectedVoiceURI) return;
+            const voices = this.speech.getVoices();
+            const chosen = voices.find(v => v.voiceURI === this.selectedVoiceURI);
+            if (!chosen) return;
+
+            const sentence = this.voiceTestSentences[Math.floor(Math.random() * this.voiceTestSentences.length)];
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.voice = chosen;
+            utterance.volume = 0.7;
+            this.speech.speak(utterance);
+        },
+        configSpeech() {
+            if (!this.speech) return;
+            const voices = this.speech.getVoices();
+            if (!voices || !voices.length) return;
+
+            // Try saved voice first
+            const savedURI = localStorage.getItem('speechVoiceURI');
+            if (savedURI) {
+                const savedVoice = voices.find(v => v.voiceURI === savedURI);
+                if (savedVoice) {
+                    this.voice = savedVoice;
+                    this.selectedVoiceURI = savedURI;
+                    return;
+                }
+            }
+
             // We at least try to pick a voice in the native user's language
             const lang = navigator.language;
             for (const v of voices.toReversed()) {
-                if (v.lang == lang) {
+                if (v.lang === lang) {
                     this.voice = v;
+                    this.selectedVoiceURI = v.voiceURI;
                     console.log(`Voice init: selected '${v.name}' from ${voices.length} voices for ${lang} speech generation`);
-                    break;
+                    return;
                 }
             }
+
+            // fallback to first voice
+            this.voice = voices[0];
+            this.selectedVoiceURI = voices[0].voiceURI;
         },
         localSave(key, val) {
             try {
@@ -284,6 +382,11 @@ const App = {
             for (const key of localKeys) {
                 const val = localStorage.getItem(key); // null if not found
                 this[key] = val;
+            }
+            // Retain voice selection across sessions
+            const savedVoice = localStorage.getItem('speechVoiceURI');
+            if (savedVoice) {
+                this.selectedVoiceURI = savedVoice;
             }
         },
     },
@@ -316,6 +419,10 @@ const App = {
 
         // cache the speech synthesizer
         this.speech = window.speechSynthesis;
+        if (this.speech) {
+            this.speech.onvoiceschanged = () => { this.enumerateVoices(); };
+            this.enumerateVoices();
+        }
 
         // Load locally stored stuff
         this.localLoad();
