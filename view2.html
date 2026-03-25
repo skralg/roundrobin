@@ -24,34 +24,11 @@
     <v-app>
         <v-main>
             <v-toolbar color="primary" dark density="comfortable">
-                &nbsp; <b>Tracker ID: </b>
-                &nbsp; &nbsp;
+                <b class="ma-1">Tracker ID</b>
                 <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerId" placeholder="Tracker ID"/>
-                &nbsp; &nbsp;
-                <v-btn @click="loadTracker()" variant="tonal" rounded="sm" density="compact" :elevation="1">Load</v-btn>
+                <v-btn @click="loadTracker()" variant="tonal" rounded="sm" density="compact" :elevation="1" class="ma-1">Load</v-btn>
                 <v-spacer></v-spacer>
-                Verbal Alerts: &nbsp;
-                <select v-model="alerts" menu-props="auto" id='alertTypes'>
-                    <option value="none">None</option>
-                    <option value="everyone">Everyone</option>
-                    <option v-for="(item, id) in this.lootData.players" :key="id" :value="id">{{ item.name }}</option>
-                </select>
-                <v-btn @click="showVoicePicker = true" variant="tonal" rounded="sm" density="compact" :elevation="1" icon="mdi-account-voice" title="Configure voice"></v-btn>
-                &nbsp;
-                <select v-model="selectedTheme" @change="setTheme(selectedTheme)">
-                    <option value="light">Light</option>
-                    <option value="dark">Dark</option>
-                    <option value="ocean">Ocean</option>
-                    <option value="sunset">Sunset</option>
-                    <option value="forest">Forest</option>
-                    <option value="ice">Ice</option>
-                    <option value="volcano">Volcano</option>
-                    <option value="night">Night</option>
-                    <option value="matrix">Matrix</option>
-                    <option value="deepsea">Deep Sea</option>
-                    <option value="original">Orig-ish</option>
-                </select>
-                &nbsp;
+                <v-btn @click="showVoicePicker = true" rounded="sm" density="compact" icon="mdi-cog" title="Settings"></v-btn>
             </v-toolbar>
             
             <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
@@ -92,25 +69,59 @@
             <!--<textarea style="float:right;font-size: 10px;" rows="30" cols="50">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>-->
 
             <v-dialog v-model="showVoicePicker" max-width="480">
-                <v-card>
-                    <v-card-title>Select speech voice</v-card-title>
+                <v-card class="mt-2">
                     <v-card-text>
+                        <v-select
+                            v-model="selectedTheme"
+                            :items="[
+                                { value: 'light', text: 'Light' },
+                                { value: 'dark', text: 'Dark' },
+                                { value: 'ocean', text: 'Ocean' },
+                                { value: 'sunset', text: 'Sunset' },
+                                { value: 'forest', text: 'Forest' },
+                                { value: 'ice', text: 'Ice' },
+                                { value: 'volcano', text: 'Volcano' },
+                                { value: 'night', text: 'Night' },
+                                { value: 'matrix', text: 'Matrix' },
+                                { value: 'deepsea', text: 'Deep Sea' },
+                                { value: 'original', text: 'Orig-ish' }
+                            ]"
+                            item-title="text"
+                            item-value="value"
+                            label="Theme"
+                            hide-details
+                            compact
+                            outlined
+                            @update:model-value="setTheme($event)"
+                        ></v-select>
+                        <br/>
+                        <v-select
+                            v-model="alerts"
+                            label="Alert Level"
+                            :items="alertItems"
+                            item-title="text"
+                            item-value="value"
+                            hide-details
+                            compact
+                            outlined
+                        ></v-select>
+                        <br/>
                         <v-select
                             v-model="selectedVoiceURI"
                             :items="voices"
                             item-title="label"
                             item-value="uri"
-                            label="Available voices"
-                            dense
+                            label="Available Speech Voices"
+                            hide-details
+                            compact
                             outlined
-                        />
-                        <p v-if="voices.length === 0" class="text-caption">No voices loaded yet. Ensure speechSynthesis is available and try again.</p>
+                        ></v-select>
+                        <span v-if="voices.length === 0" class="text-caption">No voices loaded yet. Ensure speechSynthesis is available and try again.</span>
                     </v-card-text>
                     <v-card-actions>
-                        <v-spacer />
-                        <v-btn text color="primary" @click="testVoice()" :disabled="!selectedVoiceURI">Test</v-btn>
-                        <v-btn text color="primary" @click="showVoicePicker = false">Cancel</v-btn>
-                        <v-btn text color="primary" @click="applySelectedVoice()">Apply</v-btn>
+                        <v-btn variant="outlined" color="primary" @click="testVoice()" :disabled="!selectedVoiceURI">Test Voice</v-btn>
+                        <v-btn variant="outlined" color="primary" @click="applySelectedVoice()">Apply Changes</v-btn>
+                        <v-btn variant="outlined" color="primary" @click="showVoicePicker = false">Cancel</v-btn>
                     </v-card-actions>
                 </v-card>
             </v-dialog>
@@ -465,6 +476,20 @@ const App = {
                 this.selectedTheme = savedTheme;
             }
         },
+    },
+    computed: {
+        alertItems() {
+            const base = [
+                { value: 'none', text: 'None' },
+                { value: 'everyone', text: 'Everyone' }
+            ];
+            if (!this.lootData || !this.lootData.players) return base;
+            const players = Object.entries(this.lootData.players).map(([id, item]) => ({
+                value: id,
+                text: item.name || id
+            }));
+            return [...base, ...players];
+        }
     },
     mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly
