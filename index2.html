@@ -1,15 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset=utf-8>
+    <meta charset="UTF-8">
     <link rel="stylesheet" href="rr.css"/>
     <link rel="stylesheet" href="vuetify.min.css"/>
     <link rel="icon" type="image/png" href="Ember-16.png"/>
-    <title>Embers Adrift Round-Robin Loot Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <title>Embers Adrift Loot Tracker</title>
 </head>
 <body>
 <div id="app">
-<div id="qc" class="tracker_container">
+    <div class="app-bar" style="background:#6750a4;color:white;padding:8px;display:flex;align-items:center;gap:10px;">
+        <span style="font-weight:bold;">Embers Adrift Loot Tracker</span>
+        <v-btn icon color="white" variant="outlined" rounded="lg" density="compact" @click="toggleCharacterList" title="Toggle Character List">
+            <v-icon>mdi-account</v-icon>
+        </v-btn>
+        <v-btn icon color="white" variant="outlined" rounded="lg" density="compact" @click="toggleTrackerMaker" title="Toggle New Tracker Tools">
+            <v-icon>mdi-hammer-wrench</v-icon>
+        </v-btn>
+    </div>
+    <div id="qc" class="tracker_container">
     <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
         <tr>
             <th colspan="2">
@@ -41,8 +51,9 @@
                             <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
                         </template>
                     </select>
-                    <button @click="confirmAward(trackerId, index)" >Confirm
-                    </button>
+                    <v-btn icon color="tertiary" elevation="1" variant="tonal" rounded="0" density="compact" @click="confirmAward(trackerId, index)" title="Confirm Award">
+                        <v-icon>mdi-check</v-icon>
+                    </v-btn>
                     <br>
                 </template>
             </th>
@@ -51,11 +62,8 @@
         <tr v-if="tracker.method != 'gear'" v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
             <td>
-                <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
+                <input type="text" class="count" size="5" v-model="lootData.players[id].trackers[trackerId].count">
                 <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
-                <!--<button style="margin-left: 5px; margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
-                    +{{ lootCount }}
-                </button>-->
                 <input type="checkbox" v-model="lootData.players[id].trackers[trackerId].checked"/>
             </td>
         </tr>
@@ -94,7 +102,7 @@
         </tr>
     </table>
 </div>
-<table class="charlist" id="character_pool">
+<table class="charlist" id="character_pool" v-show="showCharacterList">
     <tr><th><span class="delchar" @click="delChars()">X</span> Character List</th></tr>
     <tr><th><input type="text" id="new_char_name" placeholder="Enter New Player Name"/><button @click="addChar()">Add</button></th></tr>
     <tr v-for="id in sortedPlayerIds" :key="id">
@@ -105,7 +113,7 @@
         </td>
     </tr>
 </table>
-<table class="trackermaker">
+<table class="trackermaker" v-show="showTrackerMaker">
     <tr><th>Make New Tracker</th></tr>
     <tr><td>
         <button @click="addTracker('Central Shards', [2,5], 'fair');">Track Ibaxus Shards: Central</button><br>
@@ -175,7 +183,8 @@ var unsubscribe = null;
 const { createApp } = Vue;
 // Vuetify initialization
 const { createVuetify } = Vuetify;
-
+// Initialize Vuetify with Material 3 defaults
+const vuetify = createVuetify({ icons: { defaultSet: 'mdi' } });
 const App = {
     data() {
         return {
@@ -185,7 +194,9 @@ const App = {
             },
             currentTime: new Date().getTime(),
             trackerId: null,
-            devMode: 0
+            devMode: 0,
+            showCharacterList: true,
+            showTrackerMaker: true
         }
     },
     methods: {
@@ -203,6 +214,12 @@ const App = {
         toIdCase(str) {
             if (!str) return "";
             return str.toLowerCase().replace(/\s+/g, '');
+        },
+        toggleCharacterList() {
+            this.showCharacterList = !this.showCharacterList;
+        },
+        toggleTrackerMaker() {
+            this.showTrackerMaker = !this.showTrackerMaker;
         },
         addChar(name) {
             // Add a new character to the lootData based on the input field value and each tracker
@@ -602,6 +619,6 @@ const App = {
         }, 1000);
     }
 };
-createApp(App).mount('#app')
+createApp(App).use(vuetify).mount('#app')
 </script>
 </html>

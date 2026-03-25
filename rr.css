@@ -20,11 +20,12 @@ body { background-color: #888888;}
 .fairness { text-align: center; margin-left: 3px; }
 .tracker .title { text-align: center; border: 1px solid black; margin: 0px; padding: 0px; border-radius: 0px; font-size: 12pt; }
 .tracker td {
-    border: 2px solid #ccc; border-radius: 10px; background-color: #666; text-align: center;
-    padding-left: 10px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px;
-    font-weight: bold; font-family: Monospace; border-collapse: collapse;
+    background-color: #6f6f6f; text-align: center;
+    padding-left: 5px; padding-right: 5px; padding-top: 0px; padding-bottom: 0px;
+    font-weight: bold; font-family: Monospace;
 }
 .tracker tr:nth-child(4) td { background-color: #8888a8; border: 1px solid black;}
+.tracker tr:nth-child(even) td { background-color: #606060; }
 
 .delchar {
     color: red; background-color: black; font-weight: bold; font-family: monospace;
