@@ -24,7 +24,7 @@
     <v-app>
         <v-main>
             <v-toolbar color="primary" dark density="comfortable">
-                <b class="ma-1">Tracker ID</b>
+                <b class="ma-1">Tracker</b>
                 <input type="text" size="10" maxlength="10" id="external_tracker_id" class="trackerId" placeholder="Tracker ID"/>
                 <v-btn @click="loadTracker()" variant="tonal" rounded="sm" density="compact" :elevation="1" class="ma-1">Load</v-btn>
                 <v-spacer></v-spacer>
@@ -51,7 +51,7 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody v-if="lootData.trackers[trackerId].method != 'gear'">
+                <tbody v-if="!isMobile && lootData.trackers[trackerId].method != 'gear'">
                     <tr v-for="playerId in sortedTracker(trackerId)" :key="playerId">
                         <td :class="{ 'disabled' : !lootData.players[playerId].trackers[trackerId].checked}">{{ lootData.players[playerId].name }}</td>
                         <td>
@@ -60,14 +60,13 @@
                         </td>
                     </tr>
                 </tbody>
-                <tbody v-if="lootData.trackers[trackerId].method == 'gear'">
+                <tbody v-if="!isMobile && lootData.trackers[trackerId].method == 'gear'">
                     <tr v-for="line in lootData.trackers[trackerId].log" :key="line">
                         <td>{{ line }}</td>
                     </tr>
                 </tbody>
             </table>
             <!--<textarea style="float:right;font-size: 10px;" rows="30" cols="50">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>-->
-
             <v-dialog v-model="showVoicePicker" max-width="480">
                 <v-card class="mt-2">
                     <v-card-text>
@@ -274,6 +273,7 @@ const App = {
                 "Can I get a heal? Even a roach heal?",
                 "Wait, who are those shards for?"
             ],
+            isMobile: false,
             devMode: 0
         }
     },
@@ -293,6 +293,9 @@ const App = {
         elapsedTracker(trackerId) { return elapsedTracker(this.currentTime, this.lootData.trackers[trackerId]); },
         sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },
         suggest(trackerId) { return suggest(this.lootData.trackers[trackerId], this.lootData.players); },
+        updateIsMobile() {
+            this.isMobile = window.innerWidth <= 500;
+        },
         loadTracker(trackerId=null) {
             if (!trackerId) {
                 trackerId = document.getElementById('external_tracker_id').value;
@@ -495,6 +498,8 @@ const App = {
         // Detect dev mode based on URL parameter and set flag accordingly
         const urlParams = new URLSearchParams(window.location.search);
         this.devMode = urlParams.get('dev') === '1';
+        this.updateIsMobile();
+        window.addEventListener('resize', this.updateIsMobile);
 
         // Get supplied Tracker ID and configure the input field for it
         const trackerInput = document.getElementById('external_tracker_id');
