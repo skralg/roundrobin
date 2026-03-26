@@ -1,25 +1,15 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset=utf-8>
     <link rel="stylesheet" href="rr.css"/>
     <link rel="stylesheet" href="vuetify.min.css"/>
     <link rel="icon" type="image/png" href="Ember-16.png"/>
-    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
-    <title>Embers Adrift Loot Tracker</title>
+    <title>Embers Adrift Round-Robin Loot Tracker</title>
 </head>
 <body>
 <div id="app">
-    <div class="app-bar" style="background:#6750a4;color:white;padding:8px;display:flex;align-items:center;gap:10px;">
-        <span style="font-weight:bold;">Embers Adrift Loot Tracker</span>
-        <v-btn icon color="white" variant="outlined" rounded="lg" density="compact" @click="toggleCharacterList" title="Toggle Character List">
-            <v-icon>mdi-account</v-icon>
-        </v-btn>
-        <v-btn icon color="white" variant="outlined" rounded="lg" density="compact" @click="toggleTrackerMaker" title="Toggle New Tracker Tools">
-            <v-icon>mdi-hammer-wrench</v-icon>
-        </v-btn>
-    </div>
-    <div id="qc" class="tracker_container">
+<div id="qc" class="tracker_container">
     <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
         <tr>
             <th colspan="2">
@@ -30,45 +20,16 @@
                 <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
-        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest">{{ suggest(trackerId) }}</th></tr>
-        <tr>
-            <th class="suggest" colspan="2">
-                Register Drop:
-                <button v-for="lootCount in tracker.lootCounts" :key="lootCount" style="margin-left: 5px; margin-right: 5px"
-                  @click="registerDrop(trackerId, lootCount)">
-                    +{{ lootCount }}
-                </button>
-            </th>
-        </tr>
-        <tr>
-            <th v-if="tracker.pending && tracker.pending.length" class="award" colspan="2">
-                <template v-for="(pending, index) in tracker.pending" :key="pending">
-                    {{ pending[0] }} to
-                    <select :id="trackerId + '_' + index">
-                        <option value="cancel">-- Cancel --</option>
-                        <template v-for="id in sortedPlayerIds" :key="id">
-                            <option v-if="id == tracker.players[index]" :value="id" selected>{{ this.lootData.players[id].name }}</option>
-                            <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
-                        </template>
-                    </select>
-                    <v-btn style="margin-top: -4px; margin-left: 10px; margin-right: 10px;"
-                        text="&nbsp;✓&nbsp;"
-                        size="medium"
-                        rounded="lg"
-                        color="#ccc"
-                        density="compact"
-                        @click="confirmAward(trackerId, index)"
-                        title="Confirm Award">
-                    </v-btn>
-                </template>
-            </th>
-        </tr>
+        <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest" v-html="suggest(trackerId)"></th></tr>
         <tr><th colspan="2" class="stats">Drops: {{ tracker.totalDrops }} | Per hour: {{ lootRate(trackerId) }}</th></tr>
         <tr v-if="tracker.method != 'gear'" v-for="id in sortedTracker(trackerId)" :key="id">
             <td>{{ lootData.players[id].name }}</td>
             <td>
-                <input type="text" class="count" size="5" v-model="lootData.players[id].trackers[trackerId].count">
+                <input type="text" class="count" size="3" v-model="lootData.players[id].trackers[trackerId].count">
                 <span class="fairness" v-if="tracker.method === 'fair'">[{{ lootData.players[id].trackers[trackerId].fairness }}]</span>
+                <button style="margin-left: 5px; margin-right: 5px" v-for="lootCount in tracker.lootCounts" :key="lootCount" @click="addLoot(trackerId, id, lootCount)">
+                    +{{ lootCount }}
+                </button>
                 <input type="checkbox" v-model="lootData.players[id].trackers[trackerId].checked"/>
             </td>
         </tr>
@@ -107,7 +68,7 @@
         </tr>
     </table>
 </div>
-<table class="charlist" id="character_pool" v-show="showCharacterList">
+<table class="charlist" id="character_pool">
     <tr><th><span class="delchar" @click="delChars()">X</span> Character List</th></tr>
     <tr><th><input type="text" id="new_char_name" placeholder="Enter New Player Name"/><button @click="addChar()">Add</button></th></tr>
     <tr v-for="id in sortedPlayerIds" :key="id">
@@ -118,7 +79,7 @@
         </td>
     </tr>
 </table>
-<table class="trackermaker" v-show="showTrackerMaker">
+<table class="trackermaker">
     <tr><th>Make New Tracker</th></tr>
     <tr><td>
         <button @click="addTracker('Central Shards', [2,5], 'fair');">Track Ibaxus Shards: Central</button><br>
@@ -188,8 +149,7 @@ var unsubscribe = null;
 const { createApp } = Vue;
 // Vuetify initialization
 const { createVuetify } = Vuetify;
-// Initialize Vuetify with Material 3 defaults
-const vuetify = createVuetify({ icons: { defaultSet: 'mdi' } });
+
 const App = {
     data() {
         return {
@@ -199,9 +159,7 @@ const App = {
             },
             currentTime: new Date().getTime(),
             trackerId: null,
-            devMode: 0,
-            showCharacterList: true,
-            showTrackerMaker: true
+            devMode: 0
         }
     },
     methods: {
@@ -219,12 +177,6 @@ const App = {
         toIdCase(str) {
             if (!str) return "";
             return str.toLowerCase().replace(/\s+/g, '');
-        },
-        toggleCharacterList() {
-            this.showCharacterList = !this.showCharacterList;
-        },
-        toggleTrackerMaker() {
-            this.showTrackerMaker = !this.showTrackerMaker;
         },
         addChar(name) {
             // Add a new character to the lootData based on the input field value and each tracker
@@ -301,9 +253,7 @@ const App = {
                     lastWinner: false,
                     players: checkedPlayers,
                     method: method,
-                    undo: {},
-                    actions: [],
-                    pending: [],
+                    undo: false,
                     log: [],
                 };
             }
@@ -325,9 +275,7 @@ const App = {
                 tracker.createdAt = new Date().getTime();
                 tracker.totalDrops = 0;
                 tracker.lastWinner = false;
-                tracker.undo = {};
-                tracker.actions = [];
-                tracker.pending = [];
+                tracker.undo = false;
                 tracker.log = [];
                 // Reset each player's count for this tracker
                 tracker.players.forEach(playerId => {
@@ -338,50 +286,6 @@ const App = {
                 });
             }
         },
-        registerDrop(trackerId, lootCount, playerId=null) {
-            const tracker = this.lootData.trackers[trackerId];
-            // Determine who is next up by count of already registered drops
-            const index = tracker.pending ? tracker.pending.length : 0;
-            if (!playerId) playerId = tracker.players[index];
-            const player = this.lootData.players[playerId];
-            if (!tracker.pending) {
-                tracker.pending = [[lootCount, playerId]];
-            } else {
-                tracker.pending.push([lootCount, playerId]);
-            }
-            // Add an action for the viewer app
-            let name = player.name;
-            let target = playerId;
-            let msg = `+${lootCount} for ${name}`;
-            if (tracker.lootCounts.length == 1) {
-                msg = `Drop for ${name}`;
-            }
-            if (!tracker.lastWinner) {
-                name = '*NEED*';
-                target = 'everyone';
-                if (tracker.lootCounts.length == 1) {
-                    msg = `Drop, everyone NEED`;
-                } else {
-                    msg = `${lootCount} stack, everyone NEED`;
-                }
-            }
-            this.addAction(trackerId, target, msg);
-        },
-        addAction(trackerId, target, msg) {
-            const tracker = this.lootData.trackers[trackerId];
-            if (!tracker.actions) tracker.actions = [];
-            const actions = tracker.actions;
-            // Nuke default action if the tracker has lastwinner
-            actions.push({ target: target, msg: msg, id: Date.now() });
-        },
-        confirmAward(trackerId, index) {
-            const tracker = this.lootData.trackers[trackerId];
-            const lootCount = tracker.pending[index][0];
-            const playerId = document.getElementById(trackerId + '_' + index).value; // from dropdown menu in case it differs
-            if (playerId != 'cancel') this.addLoot(trackerId, playerId, lootCount);
-            tracker.pending.splice(index, 1);
-            tracker.actions.splice(index, 1);
-        },
         addLoot(trackerId, playerId, lootCount) {
             const tracker = this.lootData.trackers[trackerId];
             if (!tracker) return;
@@ -390,11 +294,10 @@ const App = {
             if (!player) return; // shouldn't happen
             // Store undo data in the tracker so we can reverse this action if needed
             //   I know I've clicked the wrong button before.
-            tracker.undo = {
+            tracker.undo = { // TODO: Maybe store fairness values too?
                 player: playerId,
                 count: lootCount,
                 lastWinner: tracker.lastWinner,
-                actions: tracker.actions,
                 minFairness: 0,
             };
             // Ensure count is treated as a number in case it was edited manually which stringifies it.
@@ -433,7 +336,6 @@ const App = {
             const playerId = tracker.undo.player;
             const lootCount = tracker.undo.count;
             const lastWinner = tracker.undo.lastWinner;
-            const actions = tracker.undo.actions;
             const minFairness = tracker.undo.minFairness;
             const playerTrackerData = this.lootData.players[playerId].trackers[trackerId];
             if (!playerTrackerData) return;
@@ -445,8 +347,7 @@ const App = {
             });
             tracker.totalDrops -= lootCount;
             tracker.lastWinner = lastWinner;
-            tracker.actions = actions;
-            tracker.undo = {};
+            tracker.undo = false;
         },
         dev() {
             // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
@@ -457,8 +358,8 @@ const App = {
             this.addChar("Scooby");
             this.addChar("Old Man Withers");
             this.addTracker("Central Shards", [2,5], 'fair');
-            //this.addTracker("Central Runes", [1]);
-            //this.addTracker("Artifacts", [1], 'gear');
+            this.addTracker("Central Runes", [1]);
+            this.addTracker("Artifacts", [1], 'gear');
         },
         loadTracker(trackerId=null) {
             if (!trackerId) {
@@ -624,6 +525,6 @@ const App = {
         }, 1000);
     }
 };
-createApp(App).use(vuetify).mount('#app')
+createApp(App).mount('#app')
 </script>
 </html>
