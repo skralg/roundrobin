@@ -8,11 +8,19 @@
     <link href="vuetify.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.x/css/materialdesignicons.min.css" rel="stylesheet">
     <style>
-        .tracker { display: inline; margin: 5px; }
+        .tracker { display: inline; margin: 3px; border-collapse: collapse; }
         .tracker thead th { padding: 5px; }
+        .tracker tbody td { border: 0px solid black; }
         .tracker th,td { text-align: center; font-family: monospace; font-weight: bold; }
-        .xtracker tr:nth-child(odd) { background-color: #e900e9; }
+        .tracker tr:first-child { border-top: 2px solid rgb(var(--v-theme-background)); }
+        .tracker tr:nth-child(odd) { background-color: rgba(var(--v-theme-primary), 0.50); }
         .tracker tr:nth-child(even) { background-color: rgba(var(--v-theme-primary), 0.25); }
+        .tracker tr:last-child  { border-bottom: 1px solid rgb(var(--v-theme-primary)); }
+
+        .tracker th:first-child { border-left: 1px solid rgb(var(--v-theme-primary)); }
+        .tracker th:last-child { border-right: 1px solid rgb(var(--v-theme-primary)); }
+        .tracker td:first-child { border-left: 1px solid rgb(var(--v-theme-primary)); }
+        .tracker td:last-child { border-right: 1px solid rgb(var(--v-theme-primary)); }
         .trackerAge { font-size: 10px; }
         .disabled { text-shadow: red 1px 1px; text-decoration: black line-through 1px; }
         .trackerId { text-align: center; }

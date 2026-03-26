@@ -51,10 +51,15 @@
                             <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
                         </template>
                     </select>
-                    <v-btn icon color="tertiary" elevation="1" variant="tonal" rounded="0" density="compact" @click="confirmAward(trackerId, index)" title="Confirm Award">
-                        <v-icon>mdi-check</v-icon>
+                    <v-btn style="margin-top: -4px; margin-left: 10px; margin-right: 10px;"
+                        text="&nbsp;✓&nbsp;"
+                        size="medium"
+                        rounded="lg"
+                        color="#ccc"
+                        density="compact"
+                        @click="confirmAward(trackerId, index)"
+                        title="Confirm Award">
                     </v-btn>
-                    <br>
                 </template>
             </th>
         </tr>
