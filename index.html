@@ -123,6 +123,25 @@
                             compact
                             outlined
                         ></v-select>
+                        <br>
+                        <v-card variant="outlined" rounded="true" density="compact" class="pa-3">
+                            <v-slider
+                                v-model="voiceVolume"
+                                thumb-label="hover"
+                                prepend-icon="mdi-volume-low"
+                                append-icon="mdi-volume-high"
+                                hint="Voice volume"
+                                persistent-hint
+                                min="0"
+                                max="1"
+                                step="0.01"
+                                class="mt-3"
+                            >
+                            <template v-slot:thumb-label="{ modelValue }">
+                                {{ Math.round(modelValue * 100) }}%
+                            </template>
+                            </v-slider>
+                        </v-card>
                         <span v-if="voices.length === 0" class="text-caption">No voices loaded yet. Ensure speechSynthesis is available and try again.</span>
                     </v-card-text>
                     <v-card-actions>
@@ -268,6 +287,7 @@ const App = {
             voice: null,
             voices: [],
             selectedVoiceURI: null,
+            voiceVolume: 0.7,
             selectedTheme: 'light',
             showVoicePicker: false,
             voiceTestSentences: [
@@ -375,7 +395,7 @@ const App = {
                 const sentence = `${trackerName} ${action.msg}`;
                 const utterance = new SpeechSynthesisUtterance(sentence);
                 utterance.voice = this.voice;
-                utterance.volume = .5;
+                utterance.volume = Number(this.voiceVolume) || 0.7;
                 this.speech.speak(utterance);
                 this.alertsRead.push(action.id);
             }
@@ -422,7 +442,7 @@ const App = {
             const sentence = this.voiceTestSentences[Math.floor(Math.random() * this.voiceTestSentences.length)];
             const utterance = new SpeechSynthesisUtterance(sentence);
             utterance.voice = chosen;
-            utterance.volume = 0.7;
+            utterance.volume = Number(this.voiceVolume) || 0.7;
             this.speech.speak(utterance);
         },
         configSpeech() {
@@ -476,10 +496,15 @@ const App = {
                 const val = localStorage.getItem(key); // null if not found
                 this[key] = val;
             }
-            // Retain voice selection across sessions
+            // Retain voice properties across sessions
             const savedVoice = localStorage.getItem('speechVoiceURI');
             if (savedVoice) {
                 this.selectedVoiceURI = savedVoice;
+            }
+            const savedVolume = localStorage.getItem('speechVoiceVolume');
+            if (savedVolume !== null) {
+                const parsed = Number(savedVolume);
+                if (!Number.isNaN(parsed)) this.voiceVolume = Math.min(1, Math.max(0, parsed));
             }
             // Retain theme choice
             const savedTheme = localStorage.getItem('themePreference');
@@ -546,6 +571,9 @@ const App = {
     watch: {
         alerts: { // save your verbal alert level when you change it
             handler(newData, oldData) { this.localSave('alerts', newData); },
+        },
+        voiceVolume: {
+            handler(newData, oldData) { this.localSave('speechVoiceVolume', newData); },
         },
     },
 };
