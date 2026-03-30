@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="Ember-16.png"/>
+  <title>Embers Adrift Tracker User Equipment Editor</title>
+  <!-- Import Vuetify CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@3.12.1/dist/vuetify.min.css" rel="stylesheet">
+  <!-- Import MDI font CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css" rel="stylesheet">
+  <!-- Import Vue 3 -->
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <!-- Import Vuetify 3 JS (ensure version compatibility with CSS) -->
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@3.12.1/dist/vuetify.min.js"></script>
+  <script src="items.js"></script>
+  <style>
+    .alt-rows .v-row:nth-child(odd)  { background-color: #f2f2f2; }
+    .alt-rows .v-row:nth-child(even) { background-color: #ffffff; }
+    .alt-cols { border: 2px solid white; margin: 1px;}
+    .alt-cols:nth-child(even) { background-color: rgb(var(--v-theme-primary));   }
+    .alt-cols:nth-child(odd)  { background-color: rgb(var(--v-theme-secondary)); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <v-app>
+      <v-main>
+        <v-container class="ma-3 pa-3 justify-center align-center bg-primary">
+          <v-form :zdisabled="this.authed == false">
+            <v-card>
+              <v-btn v-if="this.authed == false" @click="auth">Log In</v-btn>
+              <v-btn v-if="this.authed == true" disabled><i>Logged In</i></v-btn>
+              &nbsp; Character:
+              <select v-model="selected" style="border: 1px solid #ccc; appearance: auto; width: 200px; height: 40px;">
+                <option> &nbsp; -- Choose --</option>
+                <option v-for="id in sortedPlayerIds" :key="id" :value="id"> &nbsp; {{ charData[id].name }}</option>
+              </select>
+              <!-- figure this out later
+              <v-icon :icon="charIcons[charData[id].charClass].icon"></v-icon>
+              -->
+            </v-card>
+            <v-container class="">
+              <v-row>
+                <v-col cols="1">
+                  <v-tabs
+                    v-model="selectedPanel"
+                    direction="vertical"
+                    class="d-flex flex-column align-start"
+                  >
+                    <v-tab
+                      v-for="panel in panels"
+                      :key="panel.id"
+                      :value="panel.id"
+                      class="py-1"
+                      :title="panel.name"
+                      style="min-width: 56px; max-width: 56px; width: 56px; min-height: 56px; max-height: 56px; height: 56px; border: 1px solid rgba(0,0,0,0.25); border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center;"
+                    >
+                      <v-icon :icon="panel.icon" size="24" style="width: 24px; height: 24px;"></v-icon>
+                    </v-tab>
+                  </v-tabs>
+                </v-col>
+
+                <v-col cols="11" md="5">
+                  <v-row>
+                    <v-col
+                      v-for="panel in panels"
+                      :key="panel.id"
+                      v-show="panel.id === selectedPanel"
+                      class="alt-cols"
+                    >
+                      <v-row v-for="row in gearSlots" :key="row">
+                        <v-col v-for="slot in row" :key="slot" cols=4 class="text-center">
+                          <v-sheet v-if="slot == 'title'" :height=100 :width=100 class="mx-auto">
+                            <h3>{{ panel.name }}<br>Gear</h3>
+                          </v-sheet>
+                          <v-sheet v-else-if="panel.id == 'ev' && (slot == 'utility' || slot == 'l-pauldron' || slot == 'r-pauldron' || slot == 'l-greave' || slot == 'r-greave')" :height=100 :width=100 class="mx-auto">
+                            <i>No<br>Such<br>Gear</i>
+                          </v-sheet>
+                          <v-sheet v-else :height=100 :width=100 border class="mx-auto">
+                            <v-btn color="primary" density="compact">
+                              Pick Gear
+                              <v-menu activator="parent">
+                                <v-list>
+                                  <v-list-item link
+                                    v-if="panel.id == 'ibaxus' && items.artifacts.slot[slot].type == 'inner'"
+                                    v-for="item in [this.equipmentName(panel.id, slot, 'lower'), this.equipmentName(panel.id, slot, 'central')]"
+                                    :key="item" :title="item" :value="item" @click="equip(panel.id, slot, item)"
+                                  ></v-list-item>
+                                  <v-list-item link
+                                    v-if="panel.id == 'ibaxus' && items.artifacts.slot[slot].type == 'outer'"
+                                    v-for="item in [this.equipmentName(panel.id, slot, 'lower'), this.equipmentName(panel.id, slot, 'central')]"
+                                    :key="item" :title="item" :value="item" @click="equip(panel.id, slot, item)"
+                                  ></v-list-item>
+                                  <v-list-item link
+                                    v-if="panel.id == 'ibaxus' && items.artifacts.slot[slot].type == 'utility'"
+                                    v-for="item in this.equipmentName(panel.id, slot, null)"
+                                    :key="item" :title="item" :value="item" @click="equip(panel.id, slot, item)"
+                                  ></v-list-item>
+                                  <v-list-item link
+                                    v-if="panel.id == 'ev'"
+                                    v-for="item in this.equipmentName(panel.id, slot, null)"
+                                    :key="item" :title="item" :value="item" @click="equip(panel.id, slot, item)"
+                                  ></v-list-item>
+                                  <v-list-item link
+                                    v-if="panel.id == 'gp'"
+                                    v-for="item in this.equipmentName(panel.id, slot, null)"
+                                    :key="item" :title="item" :value="item" @click="equip(panel.id, slot, item)"
+                                  ></v-list-item>
+                                </v-list>
+                              </v-menu>
+                            </v-btn>
+                            <span v-if="gearData[selected] && gearData[selected][panel.id] && gearData[selected][panel.id][slot]">
+                              {{ gearData[selected][panel.id][slot] }}
+                            </span>
+                          </v-sheet>
+                          {{ slotData[slot] }}
+                        </v-col>
+                      </v-row>
+                    </v-col>
+                  </v-row>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-form>
+
+<!-- Debug stuff below -->
+          <span v-if="devMode">
+            <br>
+            <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(charData, null, 2) }}</textarea>
+            <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(gearData, null, 2) }}</textarea>
+          </span>
+        </v-container>
+      </v-main>
+    </v-app>
+  </div>
+
+  <script type="module" src="common.js"></script>
+  <script type="module">
+
+// Firebase config to enable remote viewing of the tracker data
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
+import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
+    authDomain: "embertracker.firebaseapp.com",
+    databaseURL: "https://embertracker-default-rtdb.firebaseio.com",
+    projectId: "embertracker",
+    storageBucket: "embertracker.firebasestorage.app",
+    messagingSenderId: "930812014694",
+    appId: "1:930812014694:web:fecf713742575e36cafda7"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+var unsubscribe = null;
+
+// Vue config and app initialization
+const { createApp } = Vue;
+// Vuetify initialization
+const { createVuetify } = Vuetify;
+//const { aliases, mdi } = Vuetify;
+const vuetify = createVuetify({ icons: { defaultSet: 'mdi' } });
+var unsubscribe = {};
+
+const App = {
+    data() {
+        return {
+            authed: false,
+            selected: 'roscoe', // NULL PLEASE
+            selectedPanel: 'gp',
+            charData: {},
+            gearData: {},
+            items: itemData(),
+            devMode: 0,
+            charClasses: {
+                'berserker':  { text: 'Berserker',  type: 'striker'   },
+                'brigand':    { text: 'Brigand',    type: 'striker'   },
+                'duelist':    { text: 'Duelist',    type: 'supporter' },
+                'knight':     { text: 'Knight',     type: 'defender'  },
+                'juggernaut': { text: 'Juggernaut', type: 'defender'  },
+                'marshal':    { text: 'Marshal',    type: 'defender'  },
+                'sentinel':   { text: 'Sentinel',   type: 'supporter' },
+                'warden':     { text: 'Warden',     type: 'striker'   },
+                'warlord':    { text: 'Warlord',    type: 'supporter' },
+            },
+            charIcons: {
+                'berserker':  {'icon': 'mdi-axe-battle', 'color': 'red'},
+                'brigand':    {'icon': 'mdi-sword-cross', 'color': 'red'},
+                'duelist':    {'icon': 'mdi-sword', 'color': 'green'},
+                'knight':     {'icon': 'mdi-shield-sword', 'color': 'blue'},
+                'juggernaut': {'icon': 'mdi-gavel', 'color': 'blue'},
+                'marshal':    {'icon': 'mdi-security', 'color': 'blue'},
+                'sentinel':   {'icon': 'mdi-chess-rook', 'color': 'green'},
+                'warden':     {'icon': 'mdi-ladybug', 'color': 'red'},
+                'warlord':    {'icon': 'mdi-music', 'color': 'green'},
+                "Unknown":    {'icon': 'mdi-help-box', 'color': 'black'}
+            },
+            panels: [
+                { 'id': 'gp', 'name': 'Grizzled Peaks', 'icon': 'mdi-image-filter-hdr'},
+                { 'id': 'ibaxus', 'name': 'Ibaxus', 'icon': 'mdi-drama-masks'},
+                { 'id': 'ev', 'name': 'Ember Veins', 'icon': 'mdi-diamond-stone'},
+
+            ],
+            gearSlots: [
+                ['l-ear',      'head',  'r-ear'     ],
+                ['l-pauldron', 'neck',  'r-pauldron'],
+                ['utility',    'chest', 'cuirass'   ],
+                ['l-vambrace', 'hands', 'r-vambrace'],
+                ['l-ring',     'title', 'r-ring'    ],
+                ['waist',      'legs',  'faulds'    ],
+                ['l-greave',   'feet',  'r-greave'  ]
+            ],
+            slotData: {
+                'l-ear':      'L Earring',
+                'head':       'Head',
+                'r-ear':      'R Earring',
+                'l-pauldron': 'L Pauldron',
+                'neck':       'Neck',
+                'r-pauldron': 'R Pauldron',
+                'utility':    'Utility',
+                'chest':      'Shirt',
+                'cuirass':    'Cuirass',
+                'l-vambrace': 'L Vambrace',
+                'hands':      'Gloves',
+                'r-vambrace': 'R Vambrace',
+                'l-ring':     'L Ring',
+                // No title
+                'r-ring':     'R Ring',
+                'waist':      'Belt',
+                'legs':       'Pants',
+                'faulds':     'Faulds',
+                'l-greave':   'L Greave',
+                'feet':       'Boots',
+                'r-greave':   'R Greave'
+            },
+        }
+    },
+    methods: {
+        // Converts a string to Title Case for display purposes
+        toTitleCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/(^|\s)\w/g, (match) => match.toUpperCase());
+        },
+        // Converts a string to a lowercase, no-space version for consistent ID usage
+        toIdCase(str) {
+            if (!str) return "";
+            return str.toLowerCase().replace(/\s+/g, '');
+        },
+        dev() {
+            // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
+            this.addChar("Shaggy");
+            this.addChar("Velma");
+            this.addChar("Fred");
+            this.addChar("Daphne");
+            this.addChar("Scooby");
+            this.addChar("Old Man Withers");
+        },
+        devSkralg() {
+            // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
+            this.addChar("Skralg", "warden");
+        },
+        loadChars() {
+            const tPath = 'charData';
+            get(child(ref(db), tPath)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    let newData = snapshot.val();
+                    this.charData = newData;
+                } else {
+                    alert("No character data found.");
+                    this.charData = {}; // don't leave it null or GUI cries
+                }
+            }).catch((error) => {
+                console.error("Error loading character data: ", error);
+            });
+            // Subscribe to this newly loaded Tracker
+            if (unsubscribe['Chars']) unsubscribe['Chars']();
+            const dataRef = ref(db, tPath);
+            unsubscribe['Chars'] = onValue(dataRef, (snapshot) => {
+                this.charData = snapshot.val();
+            });
+        },
+        saveChars() {
+            if (!this.authed) return;
+            set(ref(db, 'charData'), this.charData);
+        },
+        saveGear() {
+            if (!this.authed) return;
+            set(ref(db, 'gearData'), this.gearData);
+        },
+        loadGear() {
+            const tPath = 'gearData';
+            get(child(ref(db), tPath)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    let newData = snapshot.val();
+                    this.gearData = newData;
+                } else {
+                    alert("No gear data found.");
+                    this.gearData = {}; // don't leave it null or GUI cries
+                }
+            }).catch((error) => {
+                console.error("Error loading gear data: ", error);
+            });
+            // Subscribe to this newly loaded Tracker
+            if (unsubscribe['Gear']) unsubscribe['Gear']();
+            const dataRef = ref(db, tPath);
+            unsubscribe['Gear'] = onValue(dataRef, (snapshot) => {
+                this.gearData = snapshot.val();
+            });
+        },
+        auth() {
+            if (!this.authed) {
+                let pass = prompt("Please enter a valid password to authenticate.");
+                if (!pass) return;
+                const auth = getAuth();
+                signInWithEmailAndPassword(auth, 'anon@ymo.us', pass).then((userCredential) => {
+                    console.log('Anonymous login approved');
+                    this.authed = true;
+                    // Load characters from the database
+                    this.loadChars();
+                    this.loadGear();
+                }).catch((error) => {
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    console.error("Sign-in error: ", errorMessage);
+                });
+            }
+        },
+        equip(panel, slot, item) {
+            const playerId = this.selected;
+            console.log(`${playerId} ${panel} ${slot} '${item}' clicked`);
+            if (!(playerId in this.gearData)) {
+                this.gearData[playerId] = { [panel]: { [slot]: item } };
+                return;
+            }
+            console.log('playerId data: ' + JSON.stringify(this.gearData[playerId]));
+            if (!(panel in this.gearData[playerId])) {
+                this.gearData[playerId][panel] = { [slot]: item };
+                return;
+            }
+            this.gearData[playerId][panel][slot] = item;
+        },
+        equipmentName(panel, slot, region) {
+            const charClass = this.charData[this.selected].charClass;
+            console.log(`panel '${panel}' slot '${slot}' region '${region}'`);
+            if (panel == 'ibaxus') {
+                console.log('panel is ibaxus');
+                const slotType = this.items.artifacts.slot[slot].type;
+                const midText = this.items.artifacts.text;
+                if (slotType == 'inner') {
+                    const charType = this.charClasses[charClass].type;
+                    const prefix = this.items.artifacts.prefix[charType][region];
+                    const affix = this.items.artifacts.slot[slot].name;
+                    return prefix + ' ' + affix;
+                }
+                else if (slotType == 'outer') {
+                    const prefix = this.items.artifacts.prefix[charClass][region];
+                    const affix = this.items.artifacts.slot[slot].name;
+                    return prefix + ' ' + affix;
+                }
+                else if (slotType == 'utility') {
+                    return [
+                        'Ibaxian Volcanic Stone',
+                        'Ibaxian Water Stone',
+                        'Ancient Shaper Stone',
+                        'Ibaxian Pendant of the Cosmos',
+                    ];
+                }
+                else {
+                    return 'Error: panel=' + panel + ' slot=' + slot + ' region=' + region;
+                }
+                return 'todo';
+            } else if (panel == 'gp') {
+                const equipTypes = this.equipTypes(charClass);
+                console.log(`equip types for ${charClass} are ${equipTypes}`);
+                var selectedItems = [];
+                const newSlot = slot.replace(/^[rl]-/, '');
+                console.log(`slot data for ${newSlot} is ${JSON.stringify(this.items.gp[newSlot])}`);
+                for (const eType in this.items.gp[newSlot]) {
+                    console.log(`checking type ${eType} for slot ${slot} with item ${this.items.gp[newSlot][eType]}`);
+                    if (equipTypes.includes(eType)) {
+                        console.log(`adding ${this.items.gp[newSlot][eType]} for type ${eType}`);
+                        for (const item of this.items.gp[newSlot][eType]) {
+                            console.log(`adding '${item}' for type '${eType}'`);
+                            selectedItems.push(item);
+                        }
+                    }
+                }
+                return selectedItems;
+            } else if (panel == 'ev') {
+                // Trim left/right indicators
+                const newSlot = slot.replace(/^[rl]-/, '');
+                //console.log(`changed ${slot} to ${newSlot}`);
+                return this.items.ev[newSlot];
+            } else {
+                console.log('weird panel?');
+                return 'Error: panel=' + panel + ' slot=' + slot + ' region=' + region;
+            }
+        },
+        equipTypes(cc) {
+            if (cc == 'brigand' || cc == 'warden' || cc == 'duelist' || cc == 'warlord') return ['adventurer', 'leather'];
+            if (cc == 'berserker' || cc == 'sentinel')                                   return ['adventurer', 'scale'];
+            return ['adventurer'];
+        }
+    },
+    computed: {
+        sortedPlayerIds() {
+            return Object.keys(this.charData).sort((a, b) => {
+                const A = this.charData[a];
+                const B = this.charData[b];
+                // Sort by checked status first, then alphabetically by name
+                if (A.checked && !B.checked) return -1;
+                if (!A.checked && B.checked) return 1;
+                return A.name.localeCompare(B.name);
+            })
+        }
+    },
+    watch: {
+        charData: {
+            handler(newData, oldData) { if (this.authed) this.saveChars(); },
+            deep: true
+        },
+        gearData: {
+            handler(newData, oldData) { if (this.authed) this.saveGear(); },
+            deep: true
+        },
+    },
+    mounted() {
+        // Detect dev mode based on URL parameter and set flag accordingly
+        const urlParams = new URLSearchParams(window.location.search);
+        this.devMode = urlParams.get('dev') === '1';
+
+        // Add event listener to the whole app to toggle dev mode with ctrl-alt-d
+        window.addEventListener('keydown', (event) => {
+            if (event.ctrlKey && event.altKey && event.key === 'd') {
+                this.devMode = !this.devMode;
+            }
+        });
+        this.loadChars();
+        this.loadGear();
+    }
+};
+createApp(App).use(vuetify).mount('#app')
+  </script>
+</body>
+</html>
