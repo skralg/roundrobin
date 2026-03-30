@@ -1,286 +1,284 @@
 function itemData() {
 return {
     "runes": {
-        "Ibaxian_Rune_Defensive_Avoid_T50RB1": {
-            "m_displayName": "Rune of Guile",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, pants and necklaces.",
-            "m_icon": "defense_rune.png"
+        "l_celerity": {
+            "name": "Rune of Celerity",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into belts, rings, weapons, and necklaces.",
+            "icon": "mobility_rune.png",
+            "stat": "haste",
+            "1hw": 9, "2hw": 9, "ranged": 9, "shield": 3, "banner": null, "scepter": null,
+            "ear": 3, "neck": 3, "ring": 3, "chest": 3, "legs": 3, "waist": 9, "hands": 3, "feet": 3,
+            "head": 3, "pauldron": 3, "cuirass": 3, "vambrace": 3, "faulds": 3, "greave": 3
         },
-        "Ibaxian_Rune_Defensive_Avoid_T50RB2": {
-            "m_displayName": "Greater Rune of Guile",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, pants and necklaces.",
-            "m_icon": "defense_rune.png"
+        "c_celerity": {
+            "name": "Greater Rune of Celerity",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into belts, rings, weapons, and necklaces.",
+            "icon": "mobility_rune.png",
+            "stat": "haste",
+            "1hw": 15, "2hw": null, "ranged": null, "shield": 5, "banner": null, "scepter": null,
+            "ear": 5, "neck": 15, "ring": null, "chest": 5, "legs": 5, "waist": 15, "hands": 5, "feet": 5,
+            "head": 5, "pauldron": 5, "cuirass": 5, "vambrace": null, "faulds": null, "greave": null
         },
-        "Ibaxian_Rune_Defensive_Block_T50RB1": {
-            "m_displayName": "Rune of Opposition",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, belts and rings.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_Block_T50RB2": {
-            "m_displayName": "Greater Rune of Opposition",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, belts and rings.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_CDR_T50RB1": {
-            "m_displayName": "Rune of Hardiness",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots and shields.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_CDR_T50RB2": {
-            "m_displayName": "Greater Rune of Hardiness",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots and shields.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_EDR_T50RB1": {
-            "m_displayName": "Rune of Essence",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_EDR_T50RB2": {
-            "m_displayName": "Greater Rune of Essence",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_MDR_T50RB1": {
-            "m_displayName": "Rune of Mental Fortitude",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, and earrings.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_MDR_T50RB2": {
-            "m_displayName": "Greater Rune of Mental Fortitude",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, and earrings.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_PDR_T50RB1": {
-            "m_displayName": "Rune of Sturdiness",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_PDR_T50RB2": {
-            "m_displayName": "Greater Rune of Sturdiness",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_Parry_T50RB1": {
-            "m_displayName": "Rune of Deflection",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, and helms.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_Parry_T50RB2": {
-            "m_displayName": "Greater Rune of Deflection",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, and helms.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_Resilience_T50RB1": {
-            "m_displayName": "Rune of Resilience",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into armor and banners.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Defensive_Resilience_T50RB2": {
-            "m_displayName": "Greater Rune of Resilience",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into armor and banners.",
-            "m_icon": "defense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_1H_T50RB1": {
-            "m_displayName": "Rune of Deft Strikes",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_1H_T50RB2": {
-            "m_displayName": "Greater Rune of Deft Strikes",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_2H_T50RB1": {
-            "m_displayName": "Rune of Mighty Force",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_2H_T50RB2": {
-            "m_displayName": "Greater Rune of Mighty Force",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_Chemical_T50RB1": {
-            "m_displayName": "Rune of Nature's Wrath",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_Chemical_T50RB2": {
-            "m_displayName": "Greater Rune of Nature's Wrath",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_Ranged_T50RB1": {
-            "m_displayName": "Rune of Fleet Flight",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Damage_Ranged_T50RB2": {
-            "m_displayName": "Greater Rune of Fleet Flight",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Hit_T50RB1": {
-            "m_displayName": "Rune of Precision",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Hit_T50RB2": {
-            "m_displayName": "Greater Rune of Precision",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Pen_T50RB1": {
-            "m_displayName": "Rune of Perforation",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Pen_T50RB2": {
-            "m_displayName": "Greater Rune of Perforation",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Riposte_T50RB1": {
-            "m_displayName": "Rune of Revenge",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, rings and shields.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Offensive_Riposte_T50RB2": {
-            "m_displayName": "Greater Rune of Revenge",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, rings and shields.",
-            "m_icon": "offense_rune.png"
-        },
-        "Ibaxian_Rune_Preventative_CSR_T50RB1": {
-            "m_displayName": "Rune of Inoculation",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
+        "l_clarity": {
+            "name": "Rune of Clarity",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into helms, earrings, necklaces and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_CSR_T50RB2": {
-            "m_displayName": "Greater Rune of Inoculation",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
+        "c_clarity": {
+            "name": "Greater Rune of Clarity",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into helms, earrings, necklaces and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ESR_T50RB1": {
-            "m_displayName": "Rune of Resolve",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
+        "l_courage": {
+            "name": "Rune of Courage",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and shields.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ESR_T50RB2": {
-            "m_displayName": "Greater Rune of Resolve",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
+        "c_courage": {
+            "name": "Greater Rune of Courage",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and shields.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_MSR_T50RB1": {
-            "m_displayName": "Rune of Intellect",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and banners.",
+        "l_deflections": {
+            "name": "Rune of Deflection",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, and helms.",
+            "icon": "defense_rune.png"
+        },
+        "c_deflection": {
+            "name": "Greater Rune of Deflection",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, and helms.",
+            "icon": "defense_rune.png"
+        },
+        "l_deft_strikes": {
+            "name": "Rune of Deft Strikes",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "c_deft_strikes": {
+            "name": "Greater Rune of Deft Strikes",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "l_energy": {
+            "name": "Rune of Energy",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, necklaces and banners.",
+            "icon": "healing_rune.png"
+        },
+        "c_energy": {
+            "name": "Greater Rune of Energy",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, necklaces and banners.",
+            "icon": "healing_rune.png"
+        },
+        "l_essence": {
+            "name": "Rune of Essence",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
+            "icon": "defense_rune.png"
+        },
+        "c_essence": {
+            "name": "Greater Rune of Essence",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
+            "icon": "defense_rune.png"
+        },
+        "l_fleet_flight": {
+            "name": "Rune of Fleet Flight",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "c_fleet_flight": {
+            "name": "Greater Rune of Fleet Flight",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "l_fluidity": {
+            "name": "Rune of Fluidity",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, armor, banners and weapons.",
+            "icon": "mobility_rune.png"
+        },
+        "c_fluidity": {
+            "name": "Greater Rune of Fluidity",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, armor, banners and weapons.",
+            "icon": "mobility_rune.png"
+        },
+        "l_freedom": {
+            "name": "Rune of Freedom",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor and necklaces.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_MSR_T50RB2": {
-            "m_displayName": "Greater Rune of Intellect",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and banners.",
+        "c_freedom": {
+            "name": "Greater Rune of Freedom",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor and necklaces.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_PSR_T50RB1": {
-            "m_displayName": "Rune of Courage",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and shields.",
+        "l_guile": {
+            "name": "Rune of Guile",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, pants and necklaces.",
+            "icon": "defense_rune.png"
+        },
+        "c_guile": {
+            "name": "Greater Rune of Guile",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, pants and necklaces.",
+            "icon": "defense_rune.png"
+        },
+        "l_hardiness": {
+            "name": "Rune of Hardiness",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots and shields.",
+            "icon": "defense_rune.png"
+        },
+        "c_hardiness": {
+            "name": "Greater Rune of Hardiness",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots and shields.",
+            "icon": "defense_rune.png"
+        },
+        "l_inoculation": {
+            "name": "Rune of Inoculation",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_PSR_T50RB2": {
-            "m_displayName": "Greater Rune of Courage",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and shields.",
+        "c_inoculation": {
+            "name": "Greater Rune of Inoculation",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistConfuse_T50RB1": {
-            "m_displayName": "Rune of Clarity",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into helms, earrings, necklaces and banners.",
+        "l_intellect": {
+            "name": "Rune of Intellect",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistConfuse_T50RB2": {
-            "m_displayName": "Greater Rune of Clarity",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into helms, earrings, necklaces and banners.",
+        "c_intellect": {
+            "name": "Greater Rune of Intellect",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, belts and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistDaze_T50RB1": {
-            "m_displayName": "Rune of Resolution",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
+        "l_fortitude": {
+            "name": "Rune of Mental Fortitude",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, and earrings.",
+            "icon": "defense_rune.png"
+        },
+        "c_fortitude": {
+            "name": "Greater Rune of Mental Fortitude",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, and earrings.",
+            "icon": "defense_rune.png"
+        },
+        "l_mighty_force": {
+            "name": "Rune of Mighty Force",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "c_mighty_force": {
+            "name": "Greater Rune of Mighty Force",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "l_natures_wrath": {
+            "name": "Rune of Nature's Wrath",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "c_natures_wrath": {
+            "name": "Greater Rune of Nature's Wrath",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "l_opposition": {
+            "name": "Rune of Opposition",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, belts and rings.",
+            "icon": "defense_rune.png"
+        },
+        "c_opposition": {
+            "name": "Greater Rune of Opposition",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, shields, belts and rings.",
+            "icon": "defense_rune.png"
+        },
+        "l_perforation": {
+            "name": "Rune of Perforation",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "c_perforation": {
+            "name": "Greater Rune of Perforation",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "l_perseverance": {
+            "name": "Rune of Perseverance",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistDaze_T50RB2": {
-            "m_displayName": "Greater Rune of Resolution",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
+        "c_perseverance": {
+            "name": "Greater Rune of Perseverance",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistMovement_T50RB1": {
-            "m_displayName": "Rune of Freedom",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor and necklaces.",
+        "l_precision": {
+            "name": "Rune of Precision",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "c_precision": {
+            "name": "Greater Rune of Precision",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves and rings.",
+            "icon": "offense_rune.png"
+        },
+        "l_resolution": {
+            "name": "Rune of Resolution",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistMovement_T50RB2": {
-            "m_displayName": "Greater Rune of Freedom",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor and necklaces.",
+        "c_resolution": {
+            "name": "Greater Rune of Resolution",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistStun_T50RB1": {
-            "m_displayName": "Rune of Perseverance",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
+        "l_resolve": {
+            "name": "Rune of Resolve",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Preventative_ResistStun_T50RB2": {
-            "m_displayName": "Greater Rune of Perseverance",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, necklaces and banners.",
+        "c_resolve": {
+            "name": "Greater Rune of Resolve",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, earrings, and belts.",
             "icon": "resist_rune.png"
         },
-        "Ibaxian_Rune_Restorative_Heal_T50RB1": {
-            "m_displayName": "Rune of Spirit",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into rings, scepters, gloves, shirts and necklaces.",
-            "m_icon": "healing_rune.png"
+        "l_revenge": {
+            "name": "Rune of Revenge",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, rings and shields.",
+            "icon": "offense_rune.png"
         },
-        "Ibaxian_Rune_Restorative_Heal_T50RB2": {
-            "m_displayName": "Greater Rune of Spirit",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into rings, scepters, gloves, shirts and necklaces.",
-            "m_icon": "healing_rune.png"
+        "c_revenge": {
+            "name": "Greater Rune of Revenge",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into weapons, gloves, rings and shields.",
+            "icon": "offense_rune.png"
         },
-        "Ibaxian_Rune_Restorative_HealthRegen_T50RB1": {
-            "m_displayName": "Rune of Vigor",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, pants and necklaces.",
-            "m_icon": "healing_rune.png"
+        "l_spirit": {
+            "name": "Rune of Spirit",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into rings, scepters, gloves, shirts and necklaces.",
+            "icon": "healing_rune.png"
         },
-        "Ibaxian_Rune_Restorative_HealthRegen_T50RB2": {
-            "m_displayName": "Greater Rune of Vigor",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, pants and necklaces.",
-            "m_icon": "healing_rune.png"
+        "c_spirit": {
+            "name": "Greater Rune of Spirit",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into rings, scepters, gloves, shirts and necklaces.",
+            "icon": "healing_rune.png"
         },
-        "Ibaxian_Rune_Restorative_StamRegen_T50RB1": {
-            "m_displayName": "Rune of Energy",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, necklaces and banners.",
-            "m_icon": "healing_rune.png"
+        "l_sturdiness": {
+            "name": "Rune of Sturdiness",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
+            "icon": "defense_rune.png"
         },
-        "Ibaxian_Rune_Restorative_StamRegen_T50RB2": {
-            "m_displayName": "Greater Rune of Energy",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, necklaces and banners.",
-            "m_icon": "healing_rune.png"
+        "c_sturdiness": {
+            "name": "Greater Rune of Sturdiness",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into outer armor, shirts, pants, boots, shields and belts.",
+            "icon": "defense_rune.png"
         },
-        "Ibaxian_Rune_Utility_CMS_T50RB1": {
-            "m_displayName": "Rune of Fluidity",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, armor, banners and weapons.",
-            "m_icon": "mobility_rune.png"
+        "l_vigor": {
+            "name": "Rune of Vigor",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, pants and necklaces.",
+            "icon": "healing_rune.png"
         },
-        "Ibaxian_Rune_Utility_CMS_T50RB2": {
-            "m_displayName": "Greater Rune of Fluidity",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into boots, armor, banners and weapons.",
-            "m_icon": "mobility_rune.png"
+        "c_vigor": {
+            "name": "Greater Rune of Vigor",
+            "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into shirts, pants and necklaces.",
+            "icon": "healing_rune.png"
         },
-        "Ibaxian_Rune_Utility_Haste_T50RB1": {
-            "m_displayName": "Rune of Celerity",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into belts, rings, weapons, and necklaces.",
-            "m_icon": "mobility_rune.png"
-        },
-        "Ibaxian_Rune_Utility_Haste_T50RB2": {
-            "m_displayName": "Greater Rune of Celerity",
-            "m_description": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into belts, rings, weapons, and necklaces.",
-            "m_icon": "mobility_rune.png"
-        }
     },
     
     "artifacts": {
