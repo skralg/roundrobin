@@ -401,28 +401,28 @@ return {
     },
 
     "ev": {
-        "legs":     [
+        "legs": [
             'Essence Challenger Pants',    'Essence Fighter Pants',
             'Essence Guardian Pants',      'Essence Protector Pants',
             'Essence Wielder Pants',       'Essence Worker Pants'
         ],
-        "chest":    [
+        "chest": [
             'Essence Soaked Shirt',        'Essence Dipped Shirt'
         ],
-        "hands":    [
+        "hands": [
             'Essence Soaked Gloves',       'Essence Dipped Gloves'
         ],
-        'feet':     [
+        'feet': [
             'Essence Challenger Boots',    'Essence Fighter Boots',
             'Essence Guardian Boots',      'Essence Protector Boots',
             'Essence Wielder Boots',       'Essence Worker Boots'
         ],
-        'waist':    [
+        'waist': [
             'Essence Challenger Belt',     'Essence Fighter Belt',
             'Essence Guardian Belt',       'Essence Protector Belt',
             'Essence Wielder Belt',        'Essence Worker Belt'
         ],
-        'head':     [
+        'head': [
             'Essence Challenger Helm',     'Essence Fighter Helm',
             'Essence Guardian Helm',       'Essence Protector Helm',
             'Essence Wielder Helm',        'Essence Worker Helm'
@@ -432,20 +432,20 @@ return {
             'Essence Guardian Vambrace',   'Essence Protector Vambrace',
             'Essence Wielder Vambrace',    'Essence Worker Vambrace'
         ],
-        'faulds':   [
+        'faulds': [
             'Essence Soaked Faulds',       'Essence Dipped Faulds'
         ],
-        'cuirass':  [
+        'cuirass': [
             'Essence Challenger Cuirass',  'Essence Fighter Cuirass',
             'Essence Guardian Cuirass',    'Essence Protector Cuirass',
             'Essence Wielder Cuirass',     'Essence Worker Cuirass'
         ],
-        'ring':     [
+        'ring': [
             'Essence Challenger Ring',     'Essence Fighter Ring',
             'Essence Guardian Ring',       'Essence Protector Ring',
             'Essence Wielder Ring',        'Essence Worker Ring'
         ],
-        'ear':  [
+        'ear': [
             'Essence Challenger Earring',  'Essence Fighter Earring',
             'Essence Guardian Earring',    'Essence Protector Earring',
             'Essence Wielder Earring',     'Essence Worker Earring'
@@ -520,7 +520,7 @@ return {
         },
 
     },
-    "more": [
+    "notes": [
         "paste things here that need imported",
         "relentless ibaxian artifact eye patch - juggernaut head"
     ]
