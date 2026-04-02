@@ -458,6 +458,12 @@ return {
         'neck': {
             'adventurer': ['Ice Crystal Necklace'], // Anyone
         },
+        'waist': {
+            'adventurer': ['Winter Wool Belt'], // Anyone
+        },
+        'legs': {
+            'adventurer': ['Winter Wool Trousers'], // Anyone
+        },
         'greave': {
             'leather':    ['Permafrost Leather Greaves'], // Brigand, Warden, Duelist, Warlord
             'scale':      ['Frostscale Greaves'],         // Berserker, Sentinel
