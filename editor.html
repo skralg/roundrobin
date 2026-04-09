@@ -147,7 +147,7 @@
         <button v-if="this.authed == true" @click="saveTracker">Save</button>
     </th></tr>
     <tr v-if="this.authed && this.trackerId"><td>
-       <b>Share</b>: <a :href="`view.html?track=${this.trackerId}`" target="_blank">View-only Link</a>
+       <b>Share</b>: <a :href="`index.html?track=${this.trackerId}`" target="_blank">Viewer Link</a>
     </td><tr>
 </table>
 
