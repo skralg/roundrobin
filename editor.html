@@ -35,7 +35,7 @@
             <th class="suggest" colspan="2">
                 Register Drop:
                 <button v-for="lootCount in tracker.lootCounts" :key="lootCount" style="margin-left: 5px; margin-right: 5px"
-                  @click="registerDrop(trackerId, lootCount)">
+                  @click="$event.target.blur(); registerDrop(trackerId, lootCount);">
                     +{{ lootCount }}
                 </button>
             </th>
