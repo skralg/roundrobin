@@ -111,10 +111,11 @@
 <table class="charlist" id="character_pool" v-show="showCharacterList">
     <tr><th><span class="delchar" @click="delChars()">X</span> Character List</th></tr>
     <tr><th><input type="text" id="new_char_name" placeholder="Enter New Player Name"/><button @click="addChar()">Add</button></th></tr>
-    <tr v-for="id in sortedPlayerIds" :key="id">
+    <tr v-for="id in alphabeticallySortedPlayerIds" :key="id">
         <td>
             <span class="delchar" @click="delChar(id)">X</span>
-            <input type="checkbox" v-model="lootData.players[id].checked"/>
+            <input type="checkbox" v-model="lootData.players[id].checked"
+            @click="toggleAllTrackersForPlayer(id)"/>
             {{ lootData.players[id].name }}
         </td>
     </tr>
@@ -273,6 +274,15 @@ const App = {
                 this.lootData.players = {};
                 this.lootData.trackers = {};
             }
+        },
+        toggleAllTrackersForPlayer(playerId) {
+            // Toggle the checked state for all trackers of this player
+            const newStatus = !this.lootData.players[playerId].checked;
+            Object.keys(this.lootData.trackers).forEach(trackerId => {
+                if (this.lootData.players[playerId].trackers[trackerId]) {
+                    this.lootData.players[playerId].trackers[trackerId].checked = newStatus;
+                }
+            });
         },
         addTracker(_name, lootCounts=[1], method='rr') {
             // Methods should be rr for true round-robin and 'fair' for fairness tracking
@@ -583,7 +593,21 @@ const App = {
                 if (!A.checked && B.checked) return 1;
                 return A.name.localeCompare(B.name);
             })
-        }
+        },
+        // Alphabetically sorted player IDs (unchecked by checkbox, used for character list display only)
+        alphabeticallySortedPlayerIds() {
+            if (!this.lootData) {
+                console.log('no lootdata for sort');
+                return [];
+            }
+            if (!this.lootData.players) {
+                console.log('no player lootdata for sort');
+                return [];
+            }
+            return Object.keys(this.lootData.players).sort((a, b) => {
+                return this.lootData.players[a].name.localeCompare(this.lootData.players[b].name);
+            })
+        },
     },
     watch: {
         lootData: {
