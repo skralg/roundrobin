@@ -47,7 +47,7 @@
                     <select :id="trackerId + '_' + index">
                         <option value="cancel">-- Cancel --</option>
                         <template v-for="id in sortedPlayerIds" :key="id">
-                            <option v-if="id == tracker.players[index]" :value="id" selected>{{ this.lootData.players[id].name }}</option>
+                            <option v-if="id == tracker.pending[index][1]" :value="id" selected>{{ this.lootData.players[id].name }}</option>
                             <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
                         </template>
                     </select>
@@ -353,7 +353,11 @@ const App = {
             const tracker = this.lootData.trackers[trackerId];
             // Determine who is next up by count of already registered drops
             const index = tracker.pending ? tracker.pending.length : 0;
-            if (!playerId) playerId = tracker.players[index];
+            if (!playerId) {
+                // Filter to only checked players and cycle through them as needed
+                let checkedPlayers = tracker.players.filter(id => this.lootData.players[id].trackers[trackerId].checked);
+                playerId = checkedPlayers[index % checkedPlayers.length];
+            }
             const player = this.lootData.players[playerId];
             if (!tracker.pending) {
                 tracker.pending = [[lootCount, playerId]];
