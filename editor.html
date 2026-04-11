@@ -20,7 +20,8 @@
         </v-btn>
     </div>
     <div id="qc" class="tracker_container">
-    <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
+    <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" 
+        :class="'tracker ' + (trackerClass[trackerId] || '')">
         <tr>
             <th colspan="2">
                 <span class="delchar" style="float: left" @click="delTracker(trackerId)">X</span>
@@ -580,6 +581,24 @@ const App = {
         },
     },
     computed: {
+        trackerClass() {
+            // Determine CSS class based on tracker name
+            if (!this.lootData || !this.lootData.trackers) return {};
+            
+            const result = {};
+            Object.keys(this.lootData.trackers).forEach(trackerId => {
+                const tracker = this.lootData.trackers[trackerId];
+                if (tracker && tracker.name) {
+                    const nameLower = tracker.name.toLowerCase();
+                    if (nameLower.includes('central')) {
+                        result[trackerId] = 'tracker-central';
+                    } else if (nameLower.includes('lower')) {
+                        result[trackerId] = 'tracker-lower';
+                    }
+                }
+            });
+            return result;
+        },
         sortedPlayerIds() {
             if (!this.lootData) {
                 console.log('no lootdata for sort');
