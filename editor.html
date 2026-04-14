@@ -548,10 +548,12 @@ const App = {
                 signInWithEmailAndPassword(auth, 'anon@ymo.us', pass).then((userCredential) => {
                     //console.log('Anonymous login approved');
                     this.authed = true;
+                    alert("Authentication successful! You can now save trackers for remote viewing.");
                 }).catch((error) => {
                     const errorCode = error.code;
                     const errorMessage = error.message;
                     console.error("Sign-in error: ", errorMessage);
+                    alert("Authentication failed: " + errorMessage);
                 });
             }
         },
