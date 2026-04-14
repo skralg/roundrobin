@@ -5,8 +5,9 @@ export function shortDate() {
 }
 
 export function lootRate(currentTime, tracker) {
-    // use reactive currentTime so this method is re-evaluated periodically
-    const elapsedHours = (currentTime - tracker.createdAt) / (1000 * 60 * 60);
+    // use the tracker run interval from createdAt to lastConfirmed
+    const endTime = tracker.lastConfirmed || tracker.createdAt;
+    const elapsedHours = (endTime - tracker.createdAt) / (1000 * 60 * 60);
     if (elapsedHours === 0) return "N/A";
     return (tracker.totalDrops / elapsedHours).toFixed(2);
 }
