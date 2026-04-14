@@ -58,3 +58,250 @@ export function suggest(tracker, players) {
     }
     return tracker.suggest;
 }
+
+// Speech synthesis and theme management functions moved from index.html
+export function loadTracker(trackerId=null) {
+    if (!trackerId) {
+        trackerId = document.getElementById('external_tracker_id').value;
+    }
+    if (!trackerId) {
+        alert('You must enter a Tracker ID first.');
+        return;
+    }
+    const tPath = 'lootData/' + trackerId;
+    get(child(ref(db), tPath)).then((snapshot) => {
+        if (snapshot.exists()) {
+            this.lootData = snapshot.val();
+        } else {
+            alert("No data found for tracker ID: " + trackerId);
+            return;
+        }
+    }).catch((error) => {
+        console.error("Error loading tracker data: ", error);
+        return;
+    });
+
+    // Cancel any existing subscriptions to changing data
+    if (unsubscribe) unsubscribe();
+    // Handle data updates
+    const dataRef = ref(db, tPath);
+    unsubscribe = onValue(dataRef, (snapshot) => {
+        this.lootData = snapshot.val();
+        // Announce changes if verbal alerts enabled
+        for (trackerId in this.lootData.trackers) {
+            this.read(trackerId);
+        }
+    });
+}
+
+export function navigateToOldURL() {
+    // Get the current URL
+    const currentUrl = window.location.href;
+    
+    // Perform your string replacement (example: replace '/old' with '/new')
+    const newUrl = currentUrl.replace('view.html', 'view_old.html');
+    
+    // Navigate to the new URL
+    // Use window.location.href for normal navigation
+    window.location.href = newUrl;
+}
+
+export function read(trackerId) {
+    // Skip unless explicitly enabled
+    if (this.alerts == 'none') return;
+
+    // Bail if browser doesn't support it
+    if (!('speechSynthesis' in window)) return;
+
+    // Find and save a valid voice
+    if (!this.voice) this.configSpeech();
+
+    const tracker = this.lootData.trackers[trackerId];
+
+    // no actions so far
+    if (!tracker.actions || !tracker.actions.length) return;
+
+    const trackerName = this.lootData.trackers[trackerId].name;
+    for (const index in tracker.actions) {
+        let action = tracker.actions[index];
+        // Bail if this is not for an alert we want
+        if (!(this.alerts == 'everyone' || action.target == 'everyone' || this.alerts == action.target)) continue;
+
+        // Bail if we already did this one
+        if (this.alertsRead.includes(action.id)) continue;
+
+        const sentence = `${trackerName} ${action.msg}`;
+        const utterance = new SpeechSynthesisUtterance(sentence);
+        utterance.voice = this.voice;
+        utterance.volume = Number(this.voiceVolume) || 0.7;
+        this.speech.speak(utterance);
+        this.alertsRead.push(action.id);
+    }
+}
+
+export function enumerateVoices() {
+    if (!this.speech) return;
+    const voices = this.speech.getVoices();
+    this.voices = voices.map(v => ({
+        name: v.name,
+        lang: v.lang,
+        uri: v.voiceURI,
+        label: `${v.name} (${v.lang})${v.default ? ' [default]' : ''}`
+    }));
+
+    const savedURI = localStorage.getItem('speechVoiceURI');
+    if (savedURI) {
+        const match = voices.find(v => v.voiceURI === savedURI);
+        if (match) {
+            this.voice = match;
+            this.selectedVoiceURI = savedURI;
+        }
+    }
+
+    if (!this.voice) {
+        this.configSpeech();
+    }
+}
+
+export function applySelectedVoice() {
+    if (!this.selectedVoiceURI) return;
+    const chosen = this.speech.getVoices().find(v => v.voiceURI === this.selectedVoiceURI);
+    if (chosen) {
+        this.voice = chosen;
+        localStorage.setItem('speechVoiceURI', chosen.voiceURI);
+    }
+    this.showVoicePicker = false;
+}
+
+export function testVoice() {
+    if (!('speechSynthesis' in window) || !this.speech) return;
+    if (!this.selectedVoiceURI) return;
+    const voices = this.speech.getVoices();
+    const chosen = voices.find(v => v.voiceURI === this.selectedVoiceURI);
+    if (!chosen) return;
+
+    const sentence = this.voiceTestSentences[Math.floor(Math.random() * this.voiceTestSentences.length)];
+    const utterance = new SpeechSynthesisUtterance(sentence);
+    utterance.voice = chosen;
+    utterance.volume = Number(this.voiceVolume) || 0.7;
+    this.speech.speak(utterance);
+}
+
+export function configSpeech() {
+    if (!this.speech) return;
+    const voices = this.speech.getVoices();
+    if (!voices || !voices.length) return;
+
+    // Try saved voice first
+    const savedURI = localStorage.getItem('speechVoiceURI');
+    if (savedURI) {
+        const savedVoice = voices.find(v => v.voiceURI === savedURI);
+        if (savedVoice) {
+            this.voice = savedVoice;
+            this.selectedVoiceURI = savedURI;
+            return;
+        }
+    }
+
+    // We at least try to pick a voice in the native user's language
+    const lang = navigator.language;
+    for (const v of voices.toReversed()) {
+        if (v.lang === lang) {
+            this.voice = v;
+            this.selectedVoiceURI = v.voiceURI;
+            console.log(`Voice init: selected '${v.name}' from ${voices.length} voices for ${lang} speech generation`);
+            return;
+        }
+    }
+
+    // fallback to first voice
+    this.voice = voices[0];
+    this.selectedVoiceURI = voices[0].voiceURI;
+}
+
+export function localSave(key, val) {
+    try {
+        localStorage.setItem(key, val);
+    } catch (error) {
+        console.error('Error saving to localStorage: ' , error);
+    }
+}
+
+export function setTheme(themeName) {
+    if (!themeName || !this.theme) return;
+    this.selectedTheme = themeName;
+    this.theme.change(themeName);
+    localStorage.setItem('themePreference', themeName);
+}
+
+// Define the draggable directive
+export const draggable = {
+    mounted(el, binding) {
+        const toggleDragClass = (event, className, add) => {
+            const target = event.currentTarget;
+            if (!target) return;
+            target.classList[add ? 'add' : 'remove'](className);
+        };
+
+        el.draggable = true;
+        el.addEventListener('dragstart', (event) => {
+            event.dataTransfer.setData('text/plain', binding.value);
+            event.dataTransfer.effectAllowed = 'move';
+            toggleDragClass(event, 'dragging', true);
+        });
+        el.addEventListener('dragend', (event) => {
+            toggleDragClass(event, 'dragging', false);
+            toggleDragClass(event, 'over', false);
+        });
+        el.addEventListener('dragenter', (event) => {
+            event.preventDefault();
+            toggleDragClass(event, 'over', true);
+        });
+        el.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'move';
+            toggleDragClass(event, 'over', true);
+        });
+        el.addEventListener('dragleave', (event) => {
+            toggleDragClass(event, 'over', false);
+        });
+        el.addEventListener('drop', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleDragClass(event, 'over', false);
+            const fromId = event.dataTransfer.getData('text/plain');
+            const toId = binding.value;
+            if (fromId && fromId !== toId) {
+                const app = window.VueApp;
+                if (app && typeof app.onDrop === 'function') {
+                    app.onDrop(toId, fromId);
+                }
+            }
+        });
+
+    }
+};
+
+export function localLoad() {
+    const localKeys = ['alerts'];
+    // Load these keys from localStorage
+    for (const key of localKeys) {
+        const val = localStorage.getItem(key); // null if not found
+        this[key] = val;
+    }
+    // Retain voice properties across sessions
+    const savedVoice = localStorage.getItem('speechVoiceURI');
+    if (savedVoice) {
+        this.selectedVoiceURI = savedVoice;
+    }
+    const savedVolume = localStorage.getItem('speechVoiceVolume');
+    if (savedVolume !== null) {
+        const parsed = Number(savedVolume);
+        if (!Number.isNaN(parsed)) this.voiceVolume = Math.min(1, Math.max(0, parsed));
+    }
+    // Retain theme choice
+    const savedTheme = localStorage.getItem('themePreference');
+    if (savedTheme) {
+        this.selectedTheme = savedTheme;
+    }
+}

@@ -20,8 +20,9 @@
         </v-btn>
     </div>
     <div id="qc" class="tracker_container">
-    <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" 
-        :class="'tracker ' + (trackerClass[trackerId] || '')">
+    <table v-for="(tracker, trackerId) in orderedTrackers" :key="trackerId" 
+        :class="'tracker ' + (trackerClass[trackerId] || '')"
+        v-draggable="trackerId">
         <tr>
             <th colspan="2">
                 <span class="delchar" style="float: left" @click="delTracker(trackerId)">X</span>
@@ -173,7 +174,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
+import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, draggable } from './common.js';
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -198,13 +199,14 @@ const App = {
         return {
             authed: false,
             lootData: {
-                trackers: {}, players: {}
+                trackers: {}, players: {},
+                trackerOrder: []
             },
             currentTime: new Date().getTime(),
             trackerId: null,
             devMode: 0,
             showCharacterList: true,
-            showTrackerMaker: true
+            showTrackerMaker: true,
         }
     },
     methods: {
@@ -274,6 +276,7 @@ const App = {
             if (confirm(`Are you sure you want to delete ALL characters?\nThis will also remove all Trackers.\nThis action cannot be undone.`)) {
                 this.lootData.players = {};
                 this.lootData.trackers = {};
+                this.lootData.trackerOrder = [];
             }
         },
         toggleAllTrackersForPlayer(playerId) {
@@ -318,6 +321,10 @@ const App = {
                     pending: [],
                     log: [],
                 };
+                if (!Array.isArray(this.lootData.trackerOrder)) {
+                    this.lootData.trackerOrder = [];
+                }
+                this.lootData.trackerOrder.push(id);
             }
         },
         delTracker(tracker_id) {
@@ -329,6 +336,9 @@ const App = {
                         delete this.lootData.players[playerId].trackers[tracker_id];
                     }
                 });
+                if (Array.isArray(this.lootData.trackerOrder)) {
+                    this.lootData.trackerOrder = this.lootData.trackerOrder.filter(id => id !== tracker_id);
+                }
             }
         },
         resetTracker(trackerId) {
@@ -389,6 +399,21 @@ const App = {
             const actions = tracker.actions;
             // Nuke default action if the tracker has lastwinner
             actions.push({ target: target, msg: msg, id: Date.now() });
+        },
+        onDrop(targetTrackerId, sourceTrackerId) {
+            if (!sourceTrackerId || sourceTrackerId === targetTrackerId) return;
+            const trackers = Object.keys(this.lootData.trackers);
+            const fromIndex = trackers.indexOf(sourceTrackerId);
+            const toIndex = trackers.indexOf(targetTrackerId);
+            if (fromIndex === -1 || toIndex === -1) return;
+            trackers.splice(fromIndex, 1);
+            trackers.splice(toIndex, 0, sourceTrackerId);
+            const newTrackers = {};
+            trackers.forEach(id => {
+                newTrackers[id] = this.lootData.trackers[id];
+            });
+            this.lootData.trackers = newTrackers;
+            this.lootData.trackerOrder = trackers;
         },
         confirmAward(trackerId, index) {
             const tracker = this.lootData.trackers[trackerId];
@@ -631,6 +656,24 @@ const App = {
                 return this.lootData.players[a].name.localeCompare(this.lootData.players[b].name);
             })
         },
+        orderedTrackers() {
+            if (!this.lootData || !this.lootData.trackers) return {};
+            const ordered = {};
+            const order = Array.isArray(this.lootData.trackerOrder) && this.lootData.trackerOrder.length
+                ? this.lootData.trackerOrder
+                : Object.keys(this.lootData.trackers);
+            order.forEach(trackerId => {
+                if (trackerId in this.lootData.trackers) {
+                    ordered[trackerId] = this.lootData.trackers[trackerId];
+                }
+            });
+            Object.keys(this.lootData.trackers).forEach(trackerId => {
+                if (!(trackerId in ordered)) {
+                    ordered[trackerId] = this.lootData.trackers[trackerId];
+                }
+            });
+            return ordered;
+        },
     },
     watch: {
         lootData: {
@@ -672,6 +715,9 @@ const App = {
         }, 1000);
     }
 };
-createApp(App).use(vuetify).mount('#app')
+const vueApp = createApp(App)
+vueApp.directive('draggable', draggable)
+vueApp.use(vuetify)
+window.VueApp = vueApp.mount('#app')
 </script>
 </html>

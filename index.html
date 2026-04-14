@@ -58,7 +58,7 @@
                 <v-spacer></v-spacer>
                 <v-btn @click="showVoicePicker = true" rounded="sm" density="compact" icon="mdi-cog" title="Settings"></v-btn>
             </v-toolbar>
-            <table v-for="(tracker, trackerId) in lootData.trackers" :key="trackerId" class="tracker">
+            <table v-for="(tracker, trackerId) in orderedTrackers" :key="trackerId" class="tracker">
                 <thead>
                     <tr>
                         <th colspan="2" class="bg-primary on-tertiary">
@@ -544,6 +544,24 @@ const App = {
                 text: item.name || id
             }));
             return [...base, ...players];
+        },
+        orderedTrackers() {
+            if (!this.lootData || !this.lootData.trackers) return {};
+            const ordered = {};
+            const order = Array.isArray(this.lootData.trackerOrder) && this.lootData.trackerOrder.length
+                ? this.lootData.trackerOrder
+                : Object.keys(this.lootData.trackers);
+            order.forEach(trackerId => {
+                if (trackerId in this.lootData.trackers) {
+                    ordered[trackerId] = this.lootData.trackers[trackerId];
+                }
+            });
+            Object.keys(this.lootData.trackers).forEach(trackerId => {
+                if (!(trackerId in ordered)) {
+                    ordered[trackerId] = this.lootData.trackers[trackerId];
+                }
+            });
+            return ordered;
         }
     },
     mounted() {
