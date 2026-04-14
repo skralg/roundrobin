@@ -10,8 +10,8 @@
 </head>
 <body>
 <div id="app">
-    <div class="app-bar" style="background:#6750a4;color:white;padding:8px;display:flex;align-items:center;gap:10px;">
-        <span style="font-weight:bold;">Embers Adrift Loot Tracker</span>
+    <div class="app-bar">
+        <span class="app-bar-title">Embers Adrift Loot Tracker</span>
         <v-btn icon color="white" variant="outlined" rounded="lg" density="compact" @click="toggleCharacterList" title="Toggle Character List">
             <v-icon>mdi-account</v-icon>
         </v-btn>
@@ -25,18 +25,18 @@
         v-draggable="trackerId">
         <tr>
             <th colspan="2">
-                <span class="delchar" style="float: left" @click="delTracker(trackerId)">X</span>
+                <span class="delchar float-left" @click="delTracker(trackerId)">X</span>
                 {{ tracker.name }}
                 <span id="trackerAge_{{ trackerId }}" class="trackerAge">{{ this.elapsedTracker(trackerId) }}</span>
-                <button @click="undoLast(trackerId)" :disabled="!tracker.undo || !tracker.undo.player" style="float: right; margin-left: 10px;">Undo</button>
-                <span class="delchar" style="float: right" @click="resetTracker(trackerId)">↺</span>
+                <button @click="undoLast(trackerId)" :disabled="!tracker.undo || !tracker.undo.player" class="tracker-action-right">Undo</button>
+                <span class="delchar float-right" @click="resetTracker(trackerId)">↺</span>
             </th>
         </tr>
         <tr><th v-if="!tracker.lastWinner && tracker.method != 'gear'" colspan="2" class="suggest">{{ suggest(trackerId) }}</th></tr>
         <tr>
             <th class="suggest" colspan="2">
                 Register Drop:
-                <button v-for="lootCount in tracker.lootCounts" :key="lootCount" style="margin-left: 5px; margin-right: 5px"
+                <button v-for="lootCount in tracker.lootCounts" :key="lootCount" class="loot-count-button"
                   @click="$event.target.blur(); registerDrop(trackerId, lootCount);">
                     +{{ lootCount }}
                 </button>
@@ -53,7 +53,7 @@
                             <option v-else :value="id">{{ this.lootData.players[id].name }}</option>
                         </template>
                     </select>
-                    <v-btn style="margin-top: -4px; margin-left: 10px; margin-right: 10px;"
+                    <v-btn class="confirm-award-btn"
                         text="&nbsp;✓&nbsp;"
                         size="medium"
                         rounded="lg"
@@ -102,7 +102,7 @@
           </td>
         </tr>
         <tr v-if="tracker.method == 'gear'">
-          <td style="text-align: left;">
+          <td class="artifact-log-cell">
             <template v-for="line in trackerLog(trackerId)" :key="line">
             {{ line }}<br>
             </template>
@@ -157,8 +157,8 @@
 <!-- Debug stuff below -->
 <span v-if="devMode">
     <br>
-    <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>
-    <textarea rows="30" cols="50" style="font-size: 10px;">{{ JSON.stringify(lootData.players, null, 2) }}</textarea>
+    <textarea rows="30" cols="50" class="debug-textarea">{{ JSON.stringify(lootData.trackers, null, 2) }}</textarea>
+    <textarea rows="30" cols="50" class="debug-textarea">{{ JSON.stringify(lootData.players, null, 2) }}</textarea>
 </span>
 
 </div>
@@ -174,7 +174,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, draggable } from './common.js';
+import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, draggable } from './common.js';
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -657,22 +657,7 @@ const App = {
             })
         },
         orderedTrackers() {
-            if (!this.lootData || !this.lootData.trackers) return {};
-            const ordered = {};
-            const order = Array.isArray(this.lootData.trackerOrder) && this.lootData.trackerOrder.length
-                ? this.lootData.trackerOrder
-                : Object.keys(this.lootData.trackers);
-            order.forEach(trackerId => {
-                if (trackerId in this.lootData.trackers) {
-                    ordered[trackerId] = this.lootData.trackers[trackerId];
-                }
-            });
-            Object.keys(this.lootData.trackers).forEach(trackerId => {
-                if (!(trackerId in ordered)) {
-                    ordered[trackerId] = this.lootData.trackers[trackerId];
-                }
-            });
-            return ordered;
+            return orderedTrackers(this.lootData);
         },
     },
     watch: {

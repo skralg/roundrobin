@@ -59,6 +59,25 @@ export function suggest(tracker, players) {
     return tracker.suggest;
 }
 
+export function orderedTrackers(lootData) {
+    if (!lootData || !lootData.trackers) return {};
+    const ordered = {};
+    const order = Array.isArray(lootData.trackerOrder) && lootData.trackerOrder.length
+        ? lootData.trackerOrder
+        : Object.keys(lootData.trackers);
+    order.forEach(trackerId => {
+        if (trackerId in lootData.trackers) {
+            ordered[trackerId] = lootData.trackers[trackerId];
+        }
+    });
+    Object.keys(lootData.trackers).forEach(trackerId => {
+        if (!(trackerId in ordered)) {
+            ordered[trackerId] = lootData.trackers[trackerId];
+        }
+    });
+    return ordered;
+}
+
 // Speech synthesis and theme management functions moved from index.html
 export function loadTracker(trackerId=null) {
     if (!trackerId) {
