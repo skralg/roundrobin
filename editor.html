@@ -202,7 +202,6 @@ const App = {
                 trackers: {}, players: {},
                 trackerOrder: []
             },
-            currentTime: new Date().getTime(),
             trackerId: null,
             devMode: 0,
             showCharacterList: true,
@@ -211,8 +210,8 @@ const App = {
     },
     methods: {
         shortDate() { return shortDate(); },
-        lootRate(trackerId) { return lootRate(this.currentTime, this.lootData.trackers[trackerId]); },
-        elapsedTracker(trackerId) { return elapsedTracker(this.currentTime, this.lootData.trackers[trackerId]); },
+        lootRate(trackerId) { return lootRate(Date.now(), this.lootData.trackers[trackerId]); },
+        elapsedTracker(trackerId) { return elapsedTracker(this.lootData.trackers[trackerId]); },
         sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },
         suggest(trackerId) { return suggest(this.lootData.trackers[trackerId], this.lootData.players); },
         // Converts a string to Title Case for display purposes
@@ -345,6 +344,7 @@ const App = {
             if (confirm(`Are you sure you want to reset ${this.lootData.trackers[trackerId].name}?\nThis will clear all stats for this Tracker.\nThis action cannot be undone.`)) {
                 const tracker = this.lootData.trackers[trackerId];
                 tracker.createdAt = new Date().getTime();
+                tracker.lastConfirmed = tracker.createdAt;
                 tracker.totalDrops = 0;
                 tracker.lastWinner = false;
                 tracker.undo = {};
@@ -442,6 +442,7 @@ const App = {
             player.count = parseInt(player.count) + lootCount;
             player.fairness += lootCount;    // Update player fairness
             tracker.totalDrops += lootCount; // Update total drops for this tracker
+            tracker.lastConfirmed = new Date().getTime();
             // In a true round-robin, if someone grabs something out-of-order,
             //   lastWinner should not be changed so the order is not disrupted.
             // In a fairness-based tracker, lastWinner nominally works the same,
@@ -569,6 +570,7 @@ const App = {
             tracker.log.push(message);
           }
           tracker.totalDrops += 1;
+          tracker.lastConfirmed = new Date().getTime();
         },
         prefixOptions() {
           const buttons = document.querySelector('input[name="region"]:checked');
@@ -693,11 +695,6 @@ const App = {
         }
         // Focus the input field on page load for convenience
         charInput.focus();
-
-        // Update reactive currentTime every second so any computed/display methods refresh
-        setInterval(() => {
-            this.currentTime = new Date().getTime();
-        }, 1000);
     }
 };
 const vueApp = createApp(App)

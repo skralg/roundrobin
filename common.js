@@ -11,9 +11,9 @@ export function lootRate(currentTime, tracker) {
     return (tracker.totalDrops / elapsedHours).toFixed(2);
 }
 
-export function elapsedTracker(currentTime, tracker) {
-    // format elapsed time in HH:MM:SS format
-    const elapsedMs = currentTime - tracker.createdAt;
+export function elapsedTracker(tracker) {
+    // format elapsed time in HH:MM:SS format between createdAt and lastConfirmed
+    const elapsedMs = Math.abs((tracker.lastConfirmed || tracker.createdAt) - tracker.createdAt);
     const seconds = Math.floor(elapsedMs / 1000);
     const sec = Math.floor(seconds % 60);
     const min = Math.floor((seconds / 60) % 60);
