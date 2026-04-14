@@ -172,7 +172,7 @@
 
 // Firebase config to enable remote viewing of the tracker data
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getDatabase, ref, set, update, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, draggable } from './common.js';
 const firebaseConfig = {
@@ -538,7 +538,11 @@ const App = {
                 alert("You must enter a Tracker ID before saving!");
                 return;
             }
-            set(ref(db, 'lootData/' + trackerId), this.lootData);
+            const updates = {};
+            if (this.lootData.players !== undefined) updates.players = this.lootData.players;
+            if (this.lootData.trackers !== undefined) updates.trackers = this.lootData.trackers;
+            if (this.lootData.trackerOrder !== undefined) updates.trackerOrder = this.lootData.trackerOrder;
+            update(ref(db, 'lootData/' + trackerId), updates);
         },
         authTracker() {
             if (!this.authed) {
