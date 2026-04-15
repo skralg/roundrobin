@@ -1,10 +1,6 @@
 // Loot Tracker common functions for both editor an view-only apps
 
-export function shortDate() {
-    return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
-}
-
-export function lootRate(currentTime, tracker) {
+export function lootRate(tracker) {
     // use the tracker run interval from createdAt to lastConfirmed
     const endTime = tracker.lastConfirmed || tracker.createdAt;
     const elapsedHours = (endTime - tracker.createdAt) / (1000 * 60 * 60);
@@ -169,7 +165,7 @@ export function enumerateVoices() {
         label: `${v.name} (${v.lang})${v.default ? ' [default]' : ''}`
     }));
 
-    const savedURI = localStorage.getItem('speechVoiceURI');
+    const savedURI = localStorage.getItem('selectedVoiceURI');
     if (savedURI) {
         const match = voices.find(v => v.voiceURI === savedURI);
         if (match) {
@@ -188,7 +184,7 @@ export function applySelectedVoice() {
     const chosen = this.speech.getVoices().find(v => v.voiceURI === this.selectedVoiceURI);
     if (chosen) {
         this.voice = chosen;
-        localStorage.setItem('speechVoiceURI', chosen.voiceURI);
+        localStorage.setItem('selectedVoiceURI', chosen.voiceURI);
     }
     this.showVoicePicker = false;
 }
@@ -213,7 +209,7 @@ export function configSpeech() {
     if (!voices || !voices.length) return;
 
     // Try saved voice first
-    const savedURI = localStorage.getItem('speechVoiceURI');
+const savedURI = localStorage.getItem('selectedVoiceURI');
     if (savedURI) {
         const savedVoice = voices.find(v => v.voiceURI === savedURI);
         if (savedVoice) {
@@ -251,7 +247,7 @@ export function setTheme(themeName) {
     if (!themeName || !this.theme) return;
     this.selectedTheme = themeName;
     this.theme.change(themeName);
-    localStorage.setItem('themePreference', themeName);
+    localStorage.setItem('selectedTheme', themeName);
 }
 
 // Define the draggable directive
@@ -303,25 +299,16 @@ export const draggable = {
 };
 
 export function localLoad() {
-    const localKeys = ['alerts'];
+    const localKeys = ['alerts', 'selectedVoiceURI', 'voiceVolume', 'selectedTheme'];
     // Load these keys from localStorage
     for (const key of localKeys) {
         const val = localStorage.getItem(key); // null if not found
-        this[key] = val;
-    }
-    // Retain voice properties across sessions
-    const savedVoice = localStorage.getItem('speechVoiceURI');
-    if (savedVoice) {
-        this.selectedVoiceURI = savedVoice;
-    }
-    const savedVolume = localStorage.getItem('speechVoiceVolume');
-    if (savedVolume !== null) {
-        const parsed = Number(savedVolume);
-        if (!Number.isNaN(parsed)) this.voiceVolume = Math.min(1, Math.max(0, parsed));
-    }
-    // Retain theme choice
-    const savedTheme = localStorage.getItem('themePreference');
-    if (savedTheme) {
-        this.selectedTheme = savedTheme;
+        if (val === null) continue;
+        if (key === 'voiceVolume') {
+            const parsed = Number(val);
+            if (!Number.isNaN(parsed)) this.voiceVolume = Math.min(1, Math.max(0, parsed));
+        } else {
+            this[key] = val;
+        }
     }
 }

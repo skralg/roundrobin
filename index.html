@@ -98,30 +98,6 @@
                 <v-card class="mt-2">
                     <v-card-text>
                         <v-select
-                            v-model="selectedTheme"
-                            :items="[
-                                { value: 'light', text: 'Light' },
-                                { value: 'dark', text: 'Dark' },
-                                { value: 'ocean', text: 'Ocean' },
-                                { value: 'sunset', text: 'Sunset' },
-                                { value: 'forest', text: 'Forest' },
-                                { value: 'ice', text: 'Ice' },
-                                { value: 'volcano', text: 'Volcano' },
-                                { value: 'night', text: 'Night' },
-                                { value: 'matrix', text: 'Matrix' },
-                                { value: 'deepsea', text: 'Deep Sea' },
-                                { value: 'original', text: 'Orig-ish' }
-                            ]"
-                            item-title="text"
-                            item-value="value"
-                            label="Theme"
-                            hide-details
-                            compact
-                            outlined
-                            @update:model-value="setTheme($event)"
-                        ></v-select>
-                        <br/>
-                        <v-select
                             v-model="alerts"
                             label="Alert Level"
                             :items="alertItems"
@@ -162,6 +138,31 @@
                             </v-slider>
                         </v-card>
                         <span v-if="voices.length === 0" class="text-caption">No voices loaded yet. Ensure speechSynthesis is available and try again.</span>
+                        <br>
+                        <v-select
+                            v-model="selectedTheme"
+                            :items="[
+                                { value: 'light', text: 'Light' },
+                                { value: 'dark', text: 'Dark' },
+                                { value: 'ocean', text: 'Ocean' },
+                                { value: 'sunset', text: 'Sunset' },
+                                { value: 'forest', text: 'Forest' },
+                                { value: 'ice', text: 'Ice' },
+                                { value: 'volcano', text: 'Volcano' },
+                                { value: 'night', text: 'Night' },
+                                { value: 'matrix', text: 'Matrix' },
+                                { value: 'deepsea', text: 'Deep Sea' },
+                                { value: 'original', text: 'Orig-ish' },
+                                { value: 'custom', text: 'Custom' }
+                            ]"
+                            item-title="text"
+                            item-value="value"
+                            label="Theme"
+                            hide-details
+                            compact
+                            outlined
+                            @update:model-value="setTheme($event)"
+                        ></v-select>
                     </v-card-text>
                     <v-card-actions>
                         <v-btn variant="outlined" color="primary" @click="testVoice()" :disabled="!selectedVoiceURI">Test Voice</v-btn>
@@ -183,7 +184,7 @@
 <script type="module">
 const { createApp } = Vue;
 const { createVuetify, useTheme, md1, md2, md3 } = Vuetify;
-import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers } from './common.js';
+import { lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, read, enumerateVoices, applySelectedVoice, testVoice, configSpeech, localSave, setTheme, localLoad } from './common.js';
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
@@ -274,6 +275,11 @@ const vuetify = createVuetify({
                     primary: '#686898', secondary: '#81c784', tertiary: '#1b5e20', error: '#c62828', surface: '#e8f5e9', background: '#acacac'
                 }
             },
+            custom: {
+                colors: { // Defaults which get overwritten by localStorage values
+                    primary: '#686898', secondary: '#81c784', tertiary: '#1b5e20', error: '#c62828', surface: '#e8f5e9', background: '#acacac'
+                }
+            },
         }
     }
 });
@@ -298,7 +304,6 @@ const App = {
             lootData: {
                 trackers: {}, players: {}
             },
-            currentTime: new Date().getTime(),
             trackerId: null,
             alerts: 'none',
             alertsRead: [],
@@ -310,11 +315,11 @@ const App = {
             selectedTheme: 'light',
             showVoicePicker: false,
             voiceTestSentences: [
-                'Can I pet that dog?',
-                'Rune of Celerity for Roscoe. Grats Roscoe!',
-                '5-stack for Raxtin',
+                "Can I pet that dog?",
+                "Rune of Celerity for Roscoe. Grats Roscoe!",
+                "Tall stack for Herbivore",
                 "It's about the journey, not the destination.",
-                'Hey, do you guys want to do sentries?',
+                "Hey, do you guys want to do sentries?",
                 "I'm sorry, I can't do that Dave.",
                 "Would you like to play a game?",
                 "Can I get a heal? Even a roach heal?",
@@ -336,7 +341,7 @@ const App = {
     },
     methods: {
         shortDate() { return shortDate(); },
-        lootRate(trackerId) { return lootRate(this.currentTime, this.lootData.trackers[trackerId]); },
+        lootRate(trackerId) { return lootRate(this.lootData.trackers[trackerId]); },
         elapsedTracker(trackerId) { return elapsedTracker(this.lootData.trackers[trackerId]); },
         sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },
         suggest(trackerId) { return suggest(this.lootData.trackers[trackerId], this.lootData.players); },
@@ -376,161 +381,14 @@ const App = {
                 }
             });
         },
-        navigateToOldURL() {
-            // Get the current URL
-            const currentUrl = window.location.href;
-            
-            // Perform your string replacement (example: replace '/old' with '/new')
-            const newUrl = currentUrl.replace('view.html', 'view_old.html');
-            
-            // Navigate to the new URL
-            // Use window.location.href for normal navigation
-            window.location.href = newUrl;
-        },
-        read(trackerId) {
-            // Skip unless explicitly enabled
-            if (this.alerts == 'none') return;
-
-            // Bail if browser doesn't support it
-            if (!('speechSynthesis' in window)) return;
-
-            // Find and save a valid voice
-            if (!this.voice) this.configSpeech();
-
-            const tracker = this.lootData.trackers[trackerId];
-
-            // no actions so far
-            if (!tracker.actions || !tracker.actions.length) return;
-
-            const trackerName = this.lootData.trackers[trackerId].name;
-            for (const index in tracker.actions) {
-                let action = tracker.actions[index];
-                // Bail if this is not for an alert we want
-                if (!(this.alerts == 'everyone' || action.target == 'everyone' || this.alerts == action.target)) continue;
-
-                // Bail if we already did this one
-                if (this.alertsRead.includes(action.id)) continue;
-
-                const sentence = `${trackerName} ${action.msg}`;
-                const utterance = new SpeechSynthesisUtterance(sentence);
-                utterance.voice = this.voice;
-                utterance.volume = Number(this.voiceVolume) || 0.7;
-                this.speech.speak(utterance);
-                this.alertsRead.push(action.id);
-            }
-        },
-        enumerateVoices() {
-            if (!this.speech) return;
-            const voices = this.speech.getVoices();
-            this.voices = voices.map(v => ({
-                name: v.name,
-                lang: v.lang,
-                uri: v.voiceURI,
-                label: `${v.name} (${v.lang})${v.default ? ' [default]' : ''}`
-            }));
-
-            const savedURI = localStorage.getItem('speechVoiceURI');
-            if (savedURI) {
-                const match = voices.find(v => v.voiceURI === savedURI);
-                if (match) {
-                    this.voice = match;
-                    this.selectedVoiceURI = savedURI;
-                }
-            }
-
-            if (!this.voice) {
-                this.configSpeech();
-            }
-        },
-        applySelectedVoice() {
-            if (!this.selectedVoiceURI) return;
-            const chosen = this.speech.getVoices().find(v => v.voiceURI === this.selectedVoiceURI);
-            if (chosen) {
-                this.voice = chosen;
-                localStorage.setItem('speechVoiceURI', chosen.voiceURI);
-            }
-            this.showVoicePicker = false;
-        },
-        testVoice() {
-            if (!('speechSynthesis' in window) || !this.speech) return;
-            if (!this.selectedVoiceURI) return;
-            const voices = this.speech.getVoices();
-            const chosen = voices.find(v => v.voiceURI === this.selectedVoiceURI);
-            if (!chosen) return;
-
-            const sentence = this.voiceTestSentences[Math.floor(Math.random() * this.voiceTestSentences.length)];
-            const utterance = new SpeechSynthesisUtterance(sentence);
-            utterance.voice = chosen;
-            utterance.volume = Number(this.voiceVolume) || 0.7;
-            this.speech.speak(utterance);
-        },
-        configSpeech() {
-            if (!this.speech) return;
-            const voices = this.speech.getVoices();
-            if (!voices || !voices.length) return;
-
-            // Try saved voice first
-            const savedURI = localStorage.getItem('speechVoiceURI');
-            if (savedURI) {
-                const savedVoice = voices.find(v => v.voiceURI === savedURI);
-                if (savedVoice) {
-                    this.voice = savedVoice;
-                    this.selectedVoiceURI = savedURI;
-                    return;
-                }
-            }
-
-            // We at least try to pick a voice in the native user's language
-            const lang = navigator.language;
-            for (const v of voices.toReversed()) {
-                if (v.lang === lang) {
-                    this.voice = v;
-                    this.selectedVoiceURI = v.voiceURI;
-                    console.log(`Voice init: selected '${v.name}' from ${voices.length} voices for ${lang} speech generation`);
-                    return;
-                }
-            }
-
-            // fallback to first voice
-            this.voice = voices[0];
-            this.selectedVoiceURI = voices[0].voiceURI;
-        },
-        localSave(key, val) {
-            try {
-                localStorage.setItem(key, val);
-            } catch (error) {
-                console.error('Error saving to localStorage: ' , error);
-            }
-        },
-        setTheme(themeName) {
-            if (!themeName || !this.theme) return;
-            this.selectedTheme = themeName;
-            this.theme.change(themeName);
-            localStorage.setItem('themePreference', themeName);
-        },
-        localLoad() {
-            const localKeys = ['alerts'];
-            // Load these keys from localStorage
-            for (const key of localKeys) {
-                const val = localStorage.getItem(key); // null if not found
-                this[key] = val;
-            }
-            // Retain voice properties across sessions
-            const savedVoice = localStorage.getItem('speechVoiceURI');
-            if (savedVoice) {
-                this.selectedVoiceURI = savedVoice;
-            }
-            const savedVolume = localStorage.getItem('speechVoiceVolume');
-            if (savedVolume !== null) {
-                const parsed = Number(savedVolume);
-                if (!Number.isNaN(parsed)) this.voiceVolume = Math.min(1, Math.max(0, parsed));
-            }
-            // Retain theme choice
-            const savedTheme = localStorage.getItem('themePreference');
-            if (savedTheme) {
-                this.selectedTheme = savedTheme;
-            }
-        },
+        read,
+        enumerateVoices,
+        applySelectedVoice,
+        testVoice,
+        configSpeech,
+        localSave,
+        setTheme,
+        localLoad,
     },
     computed: {
         alertItems() {
@@ -575,9 +433,6 @@ const App = {
             if (event.ctrlKey && event.altKey && event.key === 'd') this.devMode = !this.devMode;
         });
 
-        // Update reactive currentTime every second so any computed/display methods refresh
-        setInterval(() => { this.currentTime = new Date().getTime(); }, 1000);
-
         // cache the speech synthesizer
         this.speech = window.speechSynthesis;
         if (this.speech) {
@@ -595,7 +450,7 @@ const App = {
             handler(newData, oldData) { this.localSave('alerts', newData); },
         },
         voiceVolume: {
-            handler(newData, oldData) { this.localSave('speechVoiceVolume', newData); },
+            handler(newData, oldData) { this.localSave('voiceVolume', newData); },
         },
     },
 };

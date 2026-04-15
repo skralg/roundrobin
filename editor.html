@@ -174,7 +174,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, update, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, draggable } from './common.js';
+import { lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, draggable } from './common.js';
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -209,11 +209,13 @@ const App = {
         }
     },
     methods: {
-        shortDate() { return shortDate(); },
-        lootRate(trackerId) { return lootRate(Date.now(), this.lootData.trackers[trackerId]); },
+        lootRate(trackerId) { return lootRate(this.lootData.trackers[trackerId]); },
         elapsedTracker(trackerId) { return elapsedTracker(this.lootData.trackers[trackerId]); },
         sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },
         suggest(trackerId) { return suggest(this.lootData.trackers[trackerId], this.lootData.players); },
+        shortDate() {
+            return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
+        },
         // Converts a string to Title Case for display purposes
         toTitleCase(str) {
             if (!str) return "";

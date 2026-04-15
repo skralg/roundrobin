@@ -125,7 +125,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest } from './common.js';
+import { lootRate, elapsedTracker, sortedTracker, suggest, localLoad, enumerateVoices, configSpeech } from './common.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
@@ -194,65 +194,9 @@ const App = {
             if (!str) return "";
             return str.toLowerCase().replace(/\s+/g, '');
         },
-        localLoad() {
-            const savedVoice = localStorage.getItem('speechVoiceURI');
-            if (savedVoice) this.selectedVoiceURI = savedVoice;
-            const savedVolume = localStorage.getItem('speechVoiceVolume');
-            if (savedVolume !== null) {
-                const parsed = Number(savedVolume);
-                if (!Number.isNaN(parsed)) this.voiceVolume = Math.min(1, Math.max(0, parsed));
-            }
-        },
-        enumerateVoices() {
-            if (!this.speech) return;
-            const voices = this.speech.getVoices();
-            this.voices = voices.map(v => ({
-                name: v.name,
-                lang: v.lang,
-                uri: v.voiceURI,
-                label: `${v.name} (${v.lang})${v.default ? ' [default]' : ''}`
-            }));
-
-            const savedURI = localStorage.getItem('speechVoiceURI');
-            if (savedURI) {
-                const match = voices.find(v => v.voiceURI === savedURI);
-                if (match) {
-                    this.voice = match;
-                    this.selectedVoiceURI = savedURI;
-                }
-            }
-
-            if (!this.voice) {
-                this.configSpeech();
-            }
-        },
-        configSpeech() {
-            if (!this.speech) return;
-            const voices = this.speech.getVoices();
-            if (!voices || !voices.length) return;
-
-            const savedURI = localStorage.getItem('speechVoiceURI');
-            if (savedURI) {
-                const savedVoice = voices.find(v => v.voiceURI === savedURI);
-                if (savedVoice) {
-                    this.voice = savedVoice;
-                    this.selectedVoiceURI = savedURI;
-                    return;
-                }
-            }
-
-            const lang = navigator.language;
-            for (const v of voices.toReversed()) {
-                if (v.lang === lang) {
-                    this.voice = v;
-                    this.selectedVoiceURI = v.voiceURI;
-                    return;
-                }
-            }
-
-            this.voice = voices[0];
-            this.selectedVoiceURI = voices[0].voiceURI;
-        },
+        localLoad,
+        enumerateVoices,
+        configSpeech,
         speakPhoneticName(playerId) {
             if (!('speechSynthesis' in window)) return;
             if (!this.speech) this.speech = window.speechSynthesis;
@@ -378,7 +322,7 @@ const App = {
         },
         selectedVoiceURI(newValue) {
             if (newValue) {
-                localStorage.setItem('speechVoiceURI', newValue);
+                localStorage.setItem('selectedVoiceURI', newValue);
                 if (this.speech) {
                     const found = this.speech.getVoices().find(v => v.voiceURI === newValue);
                     if (found) this.voice = found;
@@ -387,7 +331,7 @@ const App = {
         },
         voiceVolume(newValue) {
             if (newValue !== null && newValue !== undefined) {
-                localStorage.setItem('speechVoiceVolume', newValue);
+                localStorage.setItem('voiceVolume', newValue);
             }
         }
     },
