@@ -13,13 +13,6 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <!-- Import Vuetify 3 JS (ensure version compatibility with CSS) -->
   <script src="https://cdn.jsdelivr.net/npm/vuetify@3.12.1/dist/vuetify.min.js"></script>
-  <script type="importmap">
-  {
-    "imports": {
-      "@noble/hashes/crypto": "./vendor/noble-hashes-crypto-shim.js"
-    }
-  }
-  </script>
   <style>
     .alt-rows .v-row:nth-child(odd) {
       background-color: #f2f2f2; /* Light gray for odd rows */
@@ -48,14 +41,14 @@
       width: 220px;
       max-width: 100%;
     }
-    /* Sized for longest class label (“Juggernaut”) + prepend icon */
+    /* Sized for longest class label ("Juggernaut") + prepend icon */
     .char-class-cell {
       flex: 0 0 auto;
     }
     .char-class-select {
       max-width: 100%;
     }
-    /* ~“Level” + two digits, stacked number control */
+    /* ~"Level" + two digits, stacked number control */
     .char-level-cell {
       flex: 0 0 auto;
     }
@@ -63,7 +56,7 @@
       width: 9rem;
       max-width: 100%;
     }
-    /* Fixed width each — no flex-grow, so they stay ~half of “full row” phonetic span */
+    /* Fixed width each — no flex-grow, so they stay ~half of "full row" phonetic span */
     .char-phonetic-cell {
       flex: 0 0 12.5rem;
       width: 12.5rem;
@@ -75,21 +68,21 @@
   <div id="app">
     <v-app>
       <v-main>
-        <v-container class="ma-5 pa-5 bg-primary" fluid>
+        <v-container class="ma-5 pa-5 bg-primary">
           <v-btn v-if="this.authed == false" @click="auth">Log In</v-btn>
           <v-btn v-if="this.authed == true" disabled><i>Logged In</i></v-btn>
-          <v-form :disabled="this.authed == false"><v-card>
+          <v-form :xdisabled="this.authed == false"><v-card>
             <v-card-title>
             <v-icon icon="mdi-trash-can-outline" @click="delChars()"></v-icon> Character List
             </v-card-title>
             <v-row class="mb-4" align="center" dense>
               <v-col cols="12" md="6">
                 <v-select
-                  v-model="selectedVoiceURI"
-                  :items="voices"
-                  item-title="label"
-                  item-value="uri"
-                  label="Browser voice (JS TTS)"
+                  v-model="selectedVoice"
+                  :items="Object.values(voiceGroups).flat()"
+                  item-title="name"
+                  item-value="id"
+                  label="Kokoro Voice"
                   hide-details
                   dense
                   outlined
@@ -97,10 +90,10 @@
               </v-col>
               <v-col cols="12" md="6">
                 <v-slider
-                  v-model="voiceVolume"
+                  v-model="volume"
                   min="0"
                   max="1"
-                  step="0.01"
+                  step="0.05"
                   label="Volume"
                   thumb-label
                   dense
@@ -109,53 +102,6 @@
                     <v-icon class="ml-2">mdi-volume-high</v-icon>
                   </template>
                 </v-slider>
-              </v-col>
-            </v-row>
-            <v-row class="mb-2" align="center" dense>
-              <v-col cols="12">
-                <v-select
-                  v-model="selectedEdgeVoiceShortName"
-                  :items="edgeVoiceSelectItems"
-                  item-title="title"
-                  item-value="value"
-                  label="Discord voice (Edge TTS)"
-                  :disabled="edgeVoiceSelectItems.length === 0"
-                  hide-details
-                  density="compact"
-                  variant="outlined"
-                ></v-select>
-                <div v-if="edgeVoiceLoadError" class="text-caption text-error mt-1">
-                  {{ edgeVoiceLoadError }}
-                </div>
-                <div v-else-if="edgeVoiceSelectItems.length === 0 && edgeVoicesTriedLoad" class="text-caption text-medium-emphasis mt-1">
-                  No Edge voices loaded. Check network access to Microsoft speech endpoints, or try again later.
-                </div>
-              </v-col>
-            </v-row>
-            <v-row class="mb-2" dense>
-              <v-col cols="12">
-                <v-alert
-                  v-if="edgeTtsBrowserHint"
-                  type="info"
-                  density="compact"
-                  variant="tonal"
-                  class="text-body-2"
-                >
-                  {{ edgeTtsBrowserHint }}
-                </v-alert>
-              </v-col>
-            </v-row>
-            <v-row class="mb-4" dense>
-              <v-col cols="12">
-                <v-text-field
-                  v-model="edgeTtsProxyUrl"
-                  label="Edge TTS proxy base URL (optional)"
-                  hint="If play fails: from the embers folder run node edge-tts-proxy.mjs, then set http://10.47.73.81:8765 here (or HOST=… on the server). Pages served over HTTPS need an HTTPS proxy (or test on http://localhost)."
-                  persistent-hint
-                  density="compact"
-                  variant="outlined"
-                  hide-details="auto"
-                ></v-text-field>
               </v-col>
             </v-row>
             <v-text-field id="new_char_name" clearable
@@ -219,27 +165,14 @@
                 </div>
                 <div class="char-phonetic-cell">
                   <v-text-field
-                    v-model="charData[id].js_phonetic"
+                    v-model="charData[id].phonetic"
                     rounded="6"
                     hide-details
                     variant="outlined"
                     density="comfortable"
-                    label="JS phonetic"
+                    label="Phonetic"
                     append-icon="mdi-volume-high"
                     @click:append="speakPhoneticName(id)"
-                  ></v-text-field>
-                </div>
-                <div class="char-phonetic-cell">
-                  <v-text-field
-                    v-model="charData[id].edge_phonetic"
-                    rounded="6"
-                    hide-details
-                    variant="outlined"
-                    density="comfortable"
-                    label="Discord Phonetic"
-                    append-icon="mdi-play-circle-outline"
-                    :loading="edgeDiscordPlayBusy === id"
-                    @click:append="speakDiscordPhonetic(id)"
                   ></v-text-field>
                 </div>
               </div>
@@ -264,8 +197,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebas
 import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { lootRate, elapsedTracker, sortedTracker, suggest, localLoad, enumerateVoices, configSpeech } from './common.js';
-/** Vendored edge-tts-browser with updated Chromium headers, MIME type, and WebSocket error handling. */
-import EdgeTTSBrowser from './vendor/edge-tts-browser/index.js';
+import { KokoroTTS } from "https://esm.sh/kokoro-js@1.2.1/dist/kokoro.web.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
@@ -293,18 +225,32 @@ const App = {
             authed: false,
             charData: {},
             devMode: 0,
-            speech: null,
-            voice: null,
-            voices: [],
-            selectedVoiceURI: null,
-            voiceVolume: 0.7,
-            edgeVoicesRaw: [],
-            edgeVoicesTriedLoad: false,
-            edgeVoiceLoadError: '',
-            selectedEdgeVoiceShortName: null,
-            edgeDiscordPlayBusy: null,
-            /** POST ${base}/synth when set — see edge-tts-proxy.mjs (browser WebSocket to Microsoft often fails). */
-            edgeTtsProxyUrl: '',
+            ttsEngine: null,
+            selectedVoice: 'bf_emma',
+            volume: 0.4,
+            isLoading: false,
+            activeAudio: null,
+            voiceGroups: {
+                "British (Authoritative & Crisp)": [
+                    { id: "bf_emma", name: "Emma (Female - Formal & Authoritative)" },
+                    { id: "bf_isabella", name: "Isabella (Female - Clear & Direct)" },
+                    { id: "bf_alice", name: "Alice (Female)" },
+                    { id: "bf_lily", name: "Lily (Female)" },
+                    { id: "bm_george", name: "George (Male - Executive)" },
+                    { id: "bm_lewis", name: "Lewis (Male)" },
+                    { id: "bm_daniel", name: "Daniel (Male)" },
+                    { id: "bm_fable", name: "Fable (Male)" }
+                ],
+                "American (Standard Neural)": [
+                    { id: "af_heart", name: "Heart (Female - Default)" },
+                    { id: "af_bella", name: "Bella (Female - Clear)" },
+                    { id: "af_nicole", name: "Nicole (Female - Sharp)" },
+                    { id: "af_sarah", name: "Sarah (Female)" },
+                    { id: "af_sky", name: "Sky (Female)" },
+                    { id: "am_adam", name: "Adam (Male)" },
+                    { id: "am_michael", name: "Michael (Male)" }
+                ]
+            },
             charClasses: [
                 { id: 'berserker',  text: 'Berserker'  },
                 { id: 'brigand',    text: 'Brigand'    },
@@ -342,178 +288,45 @@ const App = {
             return str.toLowerCase().replace(/\s+/g, '');
         },
         localLoad,
-        enumerateVoices,
-        configSpeech,
-        speakPhoneticName(playerId) {
-            if (!('speechSynthesis' in window)) return;
-            if (!this.speech) this.speech = window.speechSynthesis;
-            if (!this.voice) this.configSpeech();
-            if (!this.voice) return;
-
+        async speakPhoneticName(playerId) {
             const player = this.charData[playerId];
             if (!player) return;
-            const phrase = (player.js_phonetic || player.name || '').trim();
-            if (!phrase) return;
+            const text = (player.phonetic || player.name || '').trim();
+            if (!text) return;
 
-            const utterance = new SpeechSynthesisUtterance(phrase);
-            utterance.voice = this.voice;
-            utterance.volume = Number(this.voiceVolume) || 0.7;
-            this.speech.speak(utterance);
-        },
-        escapeForEdgeTtsXml(text) {
-            return String(text)
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&apos;');
-        },
-        formatEdgeTtsError(e) {
-            if (e instanceof Error) {
-                let s = e.message || String(e);
-                if (e.cause instanceof Error && e.cause.message) {
-                    s += ' — ' + e.cause.message;
-                }
-                return s;
-            }
-            if (typeof e === 'string') {
-                if (e === '[object Event]' || e.startsWith('[object ')) {
-                    return 'Browser reported a generic connection error. The vendored Edge TTS client was updated (Chromium 143 headers, MP3 MIME, protocol fixes). If this persists, a network or policy block on WebSockets to speech.platform.bing.com is likely.';
-                }
-                return e;
-            }
-            return String(e);
-        },
-        stopDiscordTtsPlayback() {
-            if (this._discordTtsAudio) {
+            // Initialize engine if needed
+            if (!this.ttsEngine) {
                 try {
-                    this._discordTtsAudio.pause();
-                    this._discordTtsAudio.src = '';
-                } catch (_) { /* ignore */ }
-                this._discordTtsAudio = null;
-            }
-            if (this._discordTtsObjectUrl) {
-                try {
-                    URL.revokeObjectURL(this._discordTtsObjectUrl);
-                } catch (_) { /* ignore */ }
-                this._discordTtsObjectUrl = null;
-            }
-        },
-        async enumerateEdgeVoices() {
-            this.edgeVoicesTriedLoad = true;
-            this.edgeVoiceLoadError = '';
-            try {
-                const raw = await EdgeTTSBrowser.getVoices();
-                if (!Array.isArray(raw)) {
-                    this.edgeVoicesRaw = [];
-                    this.edgeVoiceLoadError = 'Edge TTS voice list was not returned (see console).';
+                    this.isLoading = true;
+                    this.ttsEngine = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+                        dtype: 'fp32',
+                        device: 'webgpu'
+                    });
+                } catch (err) {
+                    console.error('Failed to initialize Kokoro TTS:', err);
+                    this.isLoading = false;
                     return;
                 }
-                this.edgeVoicesRaw = raw
-                    .filter((v) => v && v.ShortName && v.FriendlyName)
-                    .sort((a, b) => String(a.FriendlyName).localeCompare(String(b.FriendlyName)));
-
-                const saved = localStorage.getItem('selectedEdgeVoiceShortName');
-                if (saved && this.edgeVoicesRaw.some((v) => v.ShortName === saved)) {
-                    this.selectedEdgeVoiceShortName = saved;
-                } else {
-                    const preferred = this.edgeVoicesRaw.find((v) => String(v.ShortName).includes('GuyNeural'))
-                        || this.edgeVoicesRaw.find((v) => String(v.Locale || '').toLowerCase().startsWith('en'))
-                        || this.edgeVoicesRaw[0];
-                    this.selectedEdgeVoiceShortName = preferred ? preferred.ShortName : null;
-                }
-            } catch (e) {
-                console.error('Edge TTS voice list failed', e);
-                this.edgeVoicesRaw = [];
-                this.edgeVoiceLoadError = 'Could not load Edge TTS voices (network, CORS, or blocking).';
             }
-        },
-        async playDiscordMp3Blob(blob) {
-            const url = URL.createObjectURL(blob);
-            this._discordTtsObjectUrl = url;
-            const audio = new Audio(url);
-            audio.volume = Number(this.voiceVolume) || 0.7;
-            this._discordTtsAudio = audio;
-            const cleanup = () => {
-                try {
-                    URL.revokeObjectURL(url);
-                } catch (_) { /* ignore */ }
-                if (this._discordTtsObjectUrl === url) this._discordTtsObjectUrl = null;
-                this._discordTtsAudio = null;
-            };
-            audio.addEventListener('ended', cleanup);
-            audio.addEventListener('error', cleanup);
-            await audio.play();
-        },
-        async speakDiscordPhoneticThroughProxy(playerId, phrase, base) {
-            this.edgeDiscordPlayBusy = playerId;
-            this.stopDiscordTtsPlayback();
-            try {
-                const safe = this.escapeForEdgeTtsXml(phrase);
-                const r = await fetch(`${base}/synth`, {
-                    method: 'POST',
-                    mode: 'cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: safe,
-                        voice: this.selectedEdgeVoiceShortName,
-                    }),
-                });
-                const errBody = !r.ok ? await r.text().catch(() => '') : '';
-                if (!r.ok) {
-                    throw new Error(errBody || `Proxy returned HTTP ${r.status}`);
-                }
-                const ab = await r.arrayBuffer();
-                const blob = new Blob([ab], { type: 'audio/mpeg' });
-                await this.playDiscordMp3Blob(blob);
-            } catch (e) {
-                console.error('Edge TTS proxy playback failed', e);
-                alert('Discord (Edge) TTS proxy failed: ' + this.formatEdgeTtsError(e));
-                this.stopDiscordTtsPlayback();
-            } finally {
-                this.edgeDiscordPlayBusy = null;
-            }
-        },
-        async speakDiscordPhonetic(playerId) {
-            const player = this.charData[playerId];
-            if (!player) return;
-            const phrase = (player.edge_phonetic || player.name || '').trim();
-            if (!phrase) return;
-
-            if (!this.selectedEdgeVoiceShortName) {
-                alert('Choose a Discord (Edge TTS) voice in the list above first.');
-                return;
-            }
-            if (this.edgeDiscordPlayBusy) return;
-
-            const proxyBase = (this.edgeTtsProxyUrl || '').trim().replace(/\/$/, '');
-            if (proxyBase) {
-                await this.speakDiscordPhoneticThroughProxy(playerId, phrase, proxyBase);
-                return;
-            }
-
-            this.edgeDiscordPlayBusy = playerId;
-            this.stopDiscordTtsPlayback();
 
             try {
-                const safe = this.escapeForEdgeTtsXml(phrase);
-                const browser = new EdgeTTSBrowser({
-                    voice: this.selectedEdgeVoiceShortName,
-                    text: safe,
+                this.isLoading = true;
+                const audioOutput = await this.ttsEngine.generate(text, {
+                    voice: this.selectedVoice
                 });
-                const blob = await browser.ttsToFile();
-                await this.playDiscordMp3Blob(blob);
-            } catch (e) {
-                console.error('Edge TTS playback failed', e);
-                let msg = this.formatEdgeTtsError(e);
-                if (/WebSocket|Microsoft Edge TTS WebSocket/i.test(msg)) {
-                    msg +=
-                        ' In most browsers you need the proxy: run `node edge-tts-proxy.mjs` on the server, then set Edge TTS proxy base URL to http://10.47.73.81:8765 (override HOST if needed, or try Microsoft Edge).';
-                }
-                alert('Discord (Edge) TTS failed: ' + msg);
-                this.stopDiscordTtsPlayback();
+                const audioBlob = audioOutput.toBlob();
+                const audioUrl = URL.createObjectURL(audioBlob);
+
+                if (this.activeAudio) this.activeAudio.pause();
+
+                this.activeAudio = new Audio(audioUrl);
+                this.activeAudio.volume = this.volume;
+                this.activeAudio.onended = () => URL.revokeObjectURL(audioUrl);
+                await this.activeAudio.play();
+            } catch (err) {
+                console.error('Kokoro TTS generation failed:', err);
             } finally {
-                this.edgeDiscordPlayBusy = null;
+                this.isLoading = false;
             }
         },
         addChar(name, charClass='Unknown', level=50) {
@@ -535,8 +348,7 @@ const App = {
                     charClass: charClass,
                     level: level,
                     name: this.toTitleCase(name),
-                    js_phonetic: '',
-                    edge_phonetic: '',
+                    phonetic: '',
                 };
                 input.value = '';
             }
@@ -647,53 +459,14 @@ const App = {
             const rem = Math.min(22, Math.max(11.25, n * 0.72 + 5.35));
             return { width: `${rem}rem`, maxWidth: '100%' };
         },
-        edgeVoiceSelectItems() {
-            return this.edgeVoicesRaw.map((v) => ({
-                title: `${v.FriendlyName} (${v.Locale})`,
-                value: v.ShortName,
-            }));
-        },
-        edgeTtsBrowserHint() {
-            if ((this.edgeTtsProxyUrl || '').trim()) return '';
-            const ua = navigator.userAgent || '';
-            if (/\bEdg\//.test(ua)) return '';
-            return 'Discord preview uses a WebSocket to Microsoft; it often fails in Chrome and Firefox even when the voice list loads. Use the optional proxy field below, run node edge-tts-proxy.mjs, or open this page in Microsoft Edge.';
-        },
     },
     watch: {
         charData: {
             handler(newData, oldData) { if (this.authed) this.saveChars(); },
             deep: true
         },
-        selectedVoiceURI(newValue) {
-            if (newValue) {
-                localStorage.setItem('selectedVoiceURI', newValue);
-                if (this.speech) {
-                    const found = this.speech.getVoices().find(v => v.voiceURI === newValue);
-                    if (found) this.voice = found;
-                }
-            }
-        },
-        voiceVolume(newValue) {
-            if (newValue !== null && newValue !== undefined) {
-                localStorage.setItem('voiceVolume', newValue);
-            }
-        },
-        selectedEdgeVoiceShortName(newValue) {
-            if (newValue) {
-                localStorage.setItem('selectedEdgeVoiceShortName', newValue);
-            }
-        },
-        edgeTtsProxyUrl(newValue) {
-            if (newValue === undefined) return;
-            try {
-                const t = newValue == null ? '' : String(newValue).trim();
-                if (t) localStorage.setItem('edgeTtsSynthProxyUrl', t);
-                else localStorage.removeItem('edgeTtsSynthProxyUrl');
-            } catch (_) { /* ignore */ }
-        },
     },
-    mounted() {
+    async mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly
         const urlParams = new URLSearchParams(window.location.search);
         this.devMode = urlParams.get('dev') === '1';
@@ -715,24 +488,18 @@ const App = {
         // Focus the input field on page load for convenience
         charInput.focus();
 
-        // Setup voice settings from saved preferences (shared with index.html)
-        this.speech = window.speechSynthesis;
-        if (this.speech) {
-            this.speech.onvoiceschanged = () => { this.enumerateVoices(); };
-            this.enumerateVoices();
-        }
-        this.localLoad();
-
+        // Pre-warm Kokoro TTS engine
         try {
-            const p = localStorage.getItem('edgeTtsSynthProxyUrl');
-            if (p) this.edgeTtsProxyUrl = p;
-        } catch (_) { /* ignore */ }
+            this.ttsEngine = await KokoroTTS.from_pretrained('onnx-community/Kokoro-82M-v1.0-ONNX', {
+                dtype: 'fp32',
+                device: 'webgpu'
+            });
+        } catch (err) {
+            console.warn('Kokoro TTS engine pre-warming failed (will retry on first use):', err);
+        }
 
+        this.localLoad();
         this.loadChars();
-        this.enumerateEdgeVoices();
-    },
-    beforeUnmount() {
-        this.stopDiscordTtsPlayback();
     },
 };
 createApp(App).use(vuetify).mount('#app')
