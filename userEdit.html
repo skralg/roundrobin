@@ -194,7 +194,7 @@
 
 // Firebase config to enable remote viewing of the tracker data
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-import { getDatabase, ref, set, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+import { getDatabase, ref, update, remove, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
 import { lootRate, elapsedTracker, sortedTracker, suggest, localLoad, enumerateVoices, configSpeech } from './common.js';
 import { KokoroTTS } from "https://esm.sh/kokoro-js@1.2.1/dist/kokoro.web.js";
@@ -230,6 +230,11 @@ const App = {
             volume: 0.4,
             isLoading: false,
             activeAudio: null,
+            applyingRemote: false,
+            savingCharData: false,
+            saveEchoTimer: null,
+            remoteCharDataSnapshot: null,
+            saveTimer: null,
             voiceGroups: {
                 "British (Authoritative & Crisp)": [
                     { id: "bf_emma", name: "Emma (Female - Formal & Authoritative)" },
@@ -382,43 +387,123 @@ const App = {
             // Add a few test characters from Scooby-Doo and trackers for demonstration purposes
             this.addChar("Skralg", "warden");
         },
+        cloneCharData(data) {
+            return data ? JSON.parse(JSON.stringify(data)) : {};
+        },
+        fieldValuesEqual(a, b) {
+            if (a === b) return true;
+            if (a == null && b == null) return true;
+            if (typeof a === 'object' || typeof b === 'object') {
+                return JSON.stringify(a) === JSON.stringify(b);
+            }
+            return false;
+        },
         migrateCharDataShape(data) {
             if (!data || typeof data !== 'object') return data;
             for (const id of Object.keys(data)) {
                 const entry = data[id];
                 if (!entry || typeof entry !== 'object') continue;
-                if (Object.prototype.hasOwnProperty.call(entry, 'phonetic')) {
-                    const legacy = entry.phonetic;
-                    if (entry.js_phonetic == null || entry.js_phonetic === '') {
-                        entry.js_phonetic = legacy == null ? '' : String(legacy);
-                    }
-                    delete entry.phonetic;
-                }
-                if (entry.js_phonetic === undefined) entry.js_phonetic = '';
-                if (entry.edge_phonetic === undefined) entry.edge_phonetic = '';
+                entry.phonetic = entry.phonetic == null ? '' : String(entry.phonetic);
+                delete entry.js_phonetic;
+                delete entry.edge_phonetic;
             }
             return data;
         },
+        diffCharData(local, base) {
+            const updates = {};
+            const removeIds = [];
+            const localData = local || {};
+            const baseData = base || {};
+
+            for (const id of Object.keys(baseData)) {
+                if (!(id in localData)) removeIds.push(id);
+            }
+
+            for (const id of Object.keys(localData)) {
+                const loc = localData[id];
+                const bas = baseData[id];
+                if (!bas) {
+                    updates[`charData/${id}`] = loc;
+                    continue;
+                }
+                const fields = new Set([...Object.keys(loc), ...Object.keys(bas)]);
+                for (const field of fields) {
+                    const lv = loc[field];
+                    const bv = bas[field];
+                    if (this.fieldValuesEqual(lv, bv)) continue;
+                    if (!(field in loc)) {
+                        updates[`charData/${id}/${field}`] = null;
+                    } else {
+                        updates[`charData/${id}/${field}`] = lv;
+                    }
+                }
+            }
+            return { updates, removeIds };
+        },
+        receiveRemoteCharData(raw) {
+            const data = raw
+                ? this.migrateCharDataShape(this.cloneCharData(raw))
+                : {};
+            if (this.savingCharData) {
+                this.savingCharData = false;
+                if (this.saveEchoTimer) {
+                    clearTimeout(this.saveEchoTimer);
+                    this.saveEchoTimer = null;
+                }
+                this.remoteCharDataSnapshot = this.cloneCharData(data);
+                return;
+            }
+            this.applyingRemote = true;
+            this.charData = data;
+            this.remoteCharDataSnapshot = this.cloneCharData(data);
+            this.$nextTick(() => { this.applyingRemote = false; });
+        },
         loadChars() {
             const tPath = 'charData';
-            get(child(ref(db), tPath)).then((snapshot) => {
-                if (snapshot.exists()) {
-                    let newData = snapshot.val();
-                    this.migrateCharDataShape(newData);
-                    this.charData = newData;
-                } else {
-                    alert("No character data found.");
-                    this.charData = {}; // don't leave it null or GUI cries
-                }
-            }).catch((error) => {
+            if (unsubscribe) unsubscribe();
+            const dataRef = ref(db, tPath);
+            unsubscribe = onValue(dataRef, (snapshot) => {
+                const raw = snapshot.exists() ? snapshot.val() : {};
+                this.receiveRemoteCharData(raw);
+            }, (error) => {
                 console.error("Error loading character data: ", error);
             });
-            // Subscribe to this newly loaded Tracker
-            const dataRef = ref(db, tPath);
         },
-        saveChars() {
-            if (!this.authed) return;
-            set(ref(db, 'charData'), this.charData);
+        scheduleCharDataSave() {
+            if (!this.authed || this.applyingRemote) return;
+            if (this.saveTimer) clearTimeout(this.saveTimer);
+            this.saveTimer = setTimeout(() => {
+                this.saveTimer = null;
+                this.flushCharDataUpdates();
+            }, 300);
+        },
+        async flushCharDataUpdates() {
+            if (!this.authed || this.applyingRemote) return;
+            const local = this.charData || {};
+            const base = this.remoteCharDataSnapshot || {};
+            const { updates, removeIds } = this.diffCharData(local, base);
+            if (!Object.keys(updates).length && !removeIds.length) return;
+
+            try {
+                this.savingCharData = true;
+                if (this.saveEchoTimer) clearTimeout(this.saveEchoTimer);
+                this.saveEchoTimer = setTimeout(() => {
+                    this.savingCharData = false;
+                    this.saveEchoTimer = null;
+                }, 5000);
+                const ops = [];
+                if (Object.keys(updates).length) ops.push(update(ref(db), updates));
+                for (const id of removeIds) ops.push(remove(ref(db, `charData/${id}`)));
+                await Promise.all(ops);
+                this.remoteCharDataSnapshot = this.cloneCharData(local);
+            } catch (error) {
+                this.savingCharData = false;
+                if (this.saveEchoTimer) {
+                    clearTimeout(this.saveEchoTimer);
+                    this.saveEchoTimer = null;
+                }
+                console.error("Error saving character data: ", error);
+            }
         },
         auth() {
             if (!this.authed) {
@@ -462,9 +547,14 @@ const App = {
     },
     watch: {
         charData: {
-            handler(newData, oldData) { if (this.authed) this.saveChars(); },
+            handler() { this.scheduleCharDataSave(); },
             deep: true
         },
+    },
+    beforeUnmount() {
+        if (unsubscribe) unsubscribe();
+        if (this.saveTimer) clearTimeout(this.saveTimer);
+        if (this.saveEchoTimer) clearTimeout(this.saveEchoTimer);
     },
     async mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly

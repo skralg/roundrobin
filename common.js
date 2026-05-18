@@ -209,7 +209,7 @@ export function configSpeech() {
     if (!voices || !voices.length) return;
 
     // Try saved voice first
-const savedURI = localStorage.getItem('selectedVoiceURI');
+    const savedURI = localStorage.getItem('selectedVoiceURI');
     if (savedURI) {
         const savedVoice = voices.find(v => v.voiceURI === savedURI);
         if (savedVoice) {
