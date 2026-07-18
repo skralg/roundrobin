@@ -246,6 +246,8 @@ const App = {
             volume: 0.4,
             isLoading: false,
             activeAudio: null,
+            activeAudioUrl: null,
+            speakGeneration: 0,
             applyingRemote: false,
             savingCharData: false,
             saveEchoTimer: null,
@@ -309,11 +311,31 @@ const App = {
             return str.toLowerCase().replace(/\s+/g, '');
         },
         localLoad,
+        stopActiveAudio() {
+            if (this.activeAudio) {
+                this.activeAudio.onended = null;
+                this.activeAudio.pause();
+                this.activeAudio.currentTime = 0;
+                this.activeAudio = null;
+            }
+            if (this.activeAudioUrl) {
+                URL.revokeObjectURL(this.activeAudioUrl);
+                this.activeAudioUrl = null;
+            }
+        },
+        phoneticSpeakText(player) {
+            const phonetic = String(player.phonetic ?? '').trim();
+            if (phonetic) return phonetic;
+            return String(player.name ?? '').trim();
+        },
         async speakPhoneticName(playerId) {
             const player = this.charData[playerId];
             if (!player) return;
-            const text = (player.phonetic || player.name || '').trim();
+            const text = this.phoneticSpeakText(player);
             if (!text) return;
+
+            const generation = ++this.speakGeneration;
+            this.stopActiveAudio();
 
             // Initialize engine if needed
             if (!this.ttsEngine) {
@@ -330,24 +352,38 @@ const App = {
                 }
             }
 
+            if (generation !== this.speakGeneration) return;
+
             try {
                 this.isLoading = true;
                 const audioOutput = await this.ttsEngine.generate(text, {
                     voice: this.selectedVoice
                 });
+                if (generation !== this.speakGeneration) return;
+
                 const audioBlob = audioOutput.toBlob();
                 const audioUrl = URL.createObjectURL(audioBlob);
 
-                if (this.activeAudio) this.activeAudio.pause();
-
+                this.stopActiveAudio();
+                this.activeAudioUrl = audioUrl;
                 this.activeAudio = new Audio(audioUrl);
                 this.activeAudio.volume = this.volume;
-                this.activeAudio.onended = () => URL.revokeObjectURL(audioUrl);
+                this.activeAudio.onended = () => {
+                    if (this.activeAudioUrl === audioUrl) {
+                        URL.revokeObjectURL(audioUrl);
+                        this.activeAudioUrl = null;
+                        this.activeAudio = null;
+                    }
+                };
                 await this.activeAudio.play();
             } catch (err) {
-                console.error('Kokoro TTS generation failed:', err);
+                if (generation === this.speakGeneration) {
+                    console.error('Kokoro TTS generation failed:', err);
+                }
             } finally {
-                this.isLoading = false;
+                if (generation === this.speakGeneration) {
+                    this.isLoading = false;
+                }
             }
         },
         addChar(name, charClass='Unknown', level=50) {
@@ -573,6 +609,7 @@ const App = {
         if (unsubscribe) unsubscribe();
         if (this.saveTimer) clearTimeout(this.saveTimer);
         if (this.saveEchoTimer) clearTimeout(this.saveEchoTimer);
+        this.stopActiveAudio();
     },
     async mounted() {
         // Detect dev mode based on URL parameter and set flag accordingly

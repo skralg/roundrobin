@@ -30,6 +30,8 @@ export function sortedTracker(trackerId, tracker, players) {
         if (tracker.method === 'fair') {
             // Players with more loot are lower priority
             if (A.fairness !== B.fairness) return A.fairness - B.fairness;
+            // Later joiners wait behind the cohort already in the queue
+            if (A.joinedAt !== B.joinedAt) return A.joinedAt - B.joinedAt;
         }
         const aName = players[a].name;
         const bName = players[b].name;
@@ -138,6 +140,7 @@ export function read(trackerId) {
     if (!tracker.actions || !tracker.actions.length) return;
 
     const trackerName = this.lootData.trackers[trackerId].name;
+    const pending = [];
     for (const index in tracker.actions) {
         let action = tracker.actions[index];
         // Bail if this is not for an alert we want
@@ -146,12 +149,21 @@ export function read(trackerId) {
         // Bail if we already did this one
         if (this.alertsRead.includes(action.id)) continue;
 
-        const sentence = `${trackerName} ${action.msg}`;
-        const utterance = new SpeechSynthesisUtterance(sentence);
+        pending.push({
+            sentence: `${trackerName} ${action.msg}`,
+            actionId: action.id,
+        });
+    }
+
+    if (!pending.length) return;
+
+    this.speech.cancel();
+    for (const item of pending) {
+        const utterance = new SpeechSynthesisUtterance(item.sentence);
         utterance.voice = this.voice;
         utterance.volume = Number(this.voiceVolume) || 0.7;
         this.speech.speak(utterance);
-        this.alertsRead.push(action.id);
+        this.alertsRead.push(item.actionId);
     }
 }
 
@@ -200,6 +212,7 @@ export function testVoice() {
     const utterance = new SpeechSynthesisUtterance(sentence);
     utterance.voice = chosen;
     utterance.volume = Number(this.voiceVolume) || 0.7;
+    this.speech.cancel();
     this.speech.speak(utterance);
 }
 
