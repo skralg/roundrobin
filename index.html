@@ -340,7 +340,6 @@ const App = {
         return { theme, toggleTheme };
     },
     methods: {
-        shortDate() { return shortDate(); },
         lootRate(trackerId) { return lootRate(this.lootData.trackers[trackerId]); },
         elapsedTracker(trackerId) { return elapsedTracker(this.lootData.trackers[trackerId]); },
         sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },

@@ -171,3 +171,10 @@ body { background-color: #888888;}
     50% { opacity: 0.8; filter: blur(4px); }
     100% { opacity: 0; filter: blur(0); }
 }
+
+/* Equipment editor */
+.alt-rows .v-row:nth-child(odd)  { background-color: #f2f2f2; }
+.alt-rows .v-row:nth-child(even) { background-color: #ffffff; }
+.alt-cols { border: 2px solid white; margin: 1px; }
+.alt-cols:nth-child(even) { background-color: rgb(var(--v-theme-primary)); }
+.alt-cols:nth-child(odd)  { background-color: rgb(var(--v-theme-secondary)); }

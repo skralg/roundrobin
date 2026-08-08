@@ -1,5 +1,9 @@
 // Loot Tracker common functions for both editor an view-only apps
 
+export function shortDate() {
+    return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
+}
+
 export function lootRate(tracker) {
     // use the tracker run interval from createdAt to lastConfirmed
     const endTime = tracker.lastConfirmed || tracker.createdAt;
@@ -27,11 +31,11 @@ export function sortedTracker(trackerId, tracker, players) {
         // Checked players are above unchecked players
         if (A.checked && !B.checked) return -1;
         if (!A.checked && B.checked) return 1;
+        // Later joiners wait behind the cohort present for the first drop
+        if (A.startTime !== B.startTime) return A.startTime - B.startTime;
         if (tracker.method === 'fair') {
             // Players with more loot are lower priority
             if (A.fairness !== B.fairness) return A.fairness - B.fairness;
-            // Later joiners wait behind the cohort already in the queue
-            if (A.joinedAt !== B.joinedAt) return A.joinedAt - B.joinedAt;
         }
         const aName = players[a].name;
         const bName = players[b].name;

@@ -174,7 +174,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
 import { getDatabase, ref, set, update, child, get, onValue } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-import { lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, draggable } from './common.js';
+import { shortDate, lootRate, elapsedTracker, sortedTracker, suggest, orderedTrackers, draggable } from './common.js';
 const firebaseConfig = {
     apiKey: "AIzaSyBJYHL7v9lBO5FDFGRTohp1yF94NVnYLOY",
     authDomain: "embertracker.firebaseapp.com",
@@ -213,9 +213,7 @@ const App = {
         elapsedTracker(trackerId) { return elapsedTracker(this.lootData.trackers[trackerId]); },
         sortedTracker(trackerId) { return sortedTracker(trackerId, this.lootData.trackers[trackerId], this.lootData.players); },
         suggest(trackerId) { return suggest(this.lootData.trackers[trackerId], this.lootData.players); },
-        shortDate() {
-            return new Date().toLocaleDateString('en-US', { month: 'short', day: '2-digit' }).toLowerCase().replace(/ /g, '');
-        },
+        shortDate() { return shortDate(); },
         // Converts a string to Title Case for display purposes
         toTitleCase(str) {
             if (!str) return "";
@@ -248,9 +246,9 @@ const App = {
                     checked: true,
                     trackers: Object.keys(this.lootData.trackers).reduce((acc, trackerId) => {
                         acc[trackerId] = { count: 0, fairness: 0, checked: true };
-                        // After the first award, newcomers join the end of the fair queue
+                        // After the first award, newcomers get a later startTime
                         if (this.lootData.trackers[trackerId].lastWinner) {
-                            acc[trackerId].joinedAt = Date.now();
+                            acc[trackerId].startTime = Date.now();
                         }
                         return acc;
                     }, {})
@@ -362,6 +360,7 @@ const App = {
                     if (this.lootData.players[playerId].trackers[trackerId]) {
                         this.lootData.players[playerId].trackers[trackerId].count = 0;
                         this.lootData.players[playerId].trackers[trackerId].fairness = 0;
+                        delete this.lootData.players[playerId].trackers[trackerId].startTime;
                     }
                 });
             }
@@ -449,11 +448,11 @@ const App = {
             player.fairness += lootCount;    // Update player fairness
             tracker.totalDrops += lootCount; // Update total drops for this tracker
             tracker.lastConfirmed = new Date().getTime();
-            // On first award, stamp the current cohort with the same joinedAt
+            // On first award, stamp the current cohort with the same startTime
             if (!tracker.lastWinner) {
-                const joinedAt = Date.now();
+                const startTime = Date.now();
                 tracker.players.forEach(id => {
-                    this.lootData.players[id].trackers[trackerId].joinedAt = joinedAt;
+                    this.lootData.players[id].trackers[trackerId].startTime = startTime;
                 });
             }
             // In a true round-robin, if someone grabs something out-of-order,
@@ -502,6 +501,12 @@ const App = {
             tracker.lastWinner = lastWinner;
             tracker.actions = actions;
             tracker.undo = {};
+            // Undoing the first award clears the startTime cohort stamp
+            if (!lastWinner) {
+                tracker.players.forEach(id => {
+                    delete this.lootData.players[id].trackers[trackerId].startTime;
+                });
+            }
         },
         dev() {
             // Add a few test characters from Scooby-Doo and trackers for demonstration purposes

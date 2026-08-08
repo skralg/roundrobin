@@ -15,9 +15,9 @@ return {
             "text": "Used to infuse power into Reconstructed Ibaxian Artifacts. Most effective when reconstructed into belts, rings, weapons, and necklaces.",
             "icon": "mobility_rune.png",
             "stat": "haste",
-            "1hw": 15, "2hw": null, "ranged": null, "shield": 5, "banner": null, "scepter": null,
-            "ear": 5, "neck": 15, "ring": null, "chest": 5, "legs": 5, "waist": 15, "hands": 5, "feet": 5,
-            "head": 5, "pauldron": 5, "cuirass": 5, "vambrace": null, "faulds": null, "greave": null
+            "1hw": 15, "2hw": 30, "ranged": 7, "shield": 5, "banner": null, "scepter": null,
+            "ear": 5, "neck": 15, "ring": 15, "chest": 5, "legs": 5, "waist": 15, "hands": 5, "feet": 5,
+            "head": 5, "pauldron": 5, "cuirass": 5, "vambrace": 5, "faulds": 5, "greave": 5
         },
         "l_clarity": {
             "name": "Rune of Clarity",
