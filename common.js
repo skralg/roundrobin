@@ -31,12 +31,12 @@ export function sortedTracker(trackerId, tracker, players) {
         // Checked players are above unchecked players
         if (A.checked && !B.checked) return -1;
         if (!A.checked && B.checked) return 1;
-        // Later joiners wait behind the cohort present for the first drop
-        if (A.startTime !== B.startTime) return A.startTime - B.startTime;
         if (tracker.method === 'fair') {
             // Players with more loot are lower priority
             if (A.fairness !== B.fairness) return A.fairness - B.fairness;
         }
+        // Later joiners wait behind the cohort present for the first drop
+        if (A.startTime !== B.startTime) return A.startTime - B.startTime;
         const aName = players[a].name;
         const bName = players[b].name;
         if (!tracker.lastWinner) {
